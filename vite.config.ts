@@ -4,6 +4,7 @@ import react from "@vitejs/plugin-react";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 
 export default defineConfig({
+  base: "/classimed/",
   plugins: [
     tanstackRouter({
       routesDirectory: "./src/routes",
