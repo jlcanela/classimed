@@ -36,7 +36,12 @@ jobs:
         run: pnpm run typecheck
 
       - name: Build application
-        run: pnpm run build
+        run: pnpm exec vite build --base=/classimed/
+
+      - name: Verify GitHub Pages asset paths
+        run: |
+          grep -q 'src="/classimed/assets/' dist/index.html
+          grep -q 'href="/classimed/assets/' dist/index.html
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
