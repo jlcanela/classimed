@@ -43,6 +43,13 @@ jobs:
           grep -q 'src="/classimed/assets/' dist/index.html
           grep -q 'href="/classimed/assets/' dist/index.html
 
+      - name: Verify iframe static design resources
+        run: |
+          test -f 'dist/design/ClassiMed Translate.html'
+          test -f dist/design/styles.css
+          test -f dist/design/data.js
+          test -f dist/design/app.jsx
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:

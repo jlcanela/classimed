@@ -6,7 +6,7 @@ export const Route = createFileRoute("/design")({
 });
 
 function DesignRoute() {
-  const designSrc = `${import.meta.env.BASE_URL}design/ClassiMed%20Translate.html`;
+  const designSrc = `${import.meta.env.BASE_URL}design/ClassiMedTranslate.html`;
 
   return (
     <Box h="calc(100vh - 120px)">
