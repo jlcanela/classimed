@@ -6,11 +6,13 @@ export const Route = createFileRoute("/design")({
 });
 
 function DesignRoute() {
+  const designSrc = `${import.meta.env.BASE_URL}design/ClassiMed%20Translate.html`;
+
   return (
     <Box h="calc(100vh - 120px)">
       <iframe
         title="ClassiMed Translate Design"
-        src="/design/ClassiMed%20Translate.html"
+        src={designSrc}
         style={{ width: "100%", height: "100%", border: 0, background: "white" }}
       />
     </Box>
