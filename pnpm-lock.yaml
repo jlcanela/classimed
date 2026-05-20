@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@effect/atom-react':
+        specifier: 4.0.0-beta.68
+        version: 4.0.0-beta.68(effect@4.0.0-beta.68)(react@19.2.6)(scheduler@0.27.0)
       '@electric-sql/pglite':
         specifier: ^0.2.0
         version: 0.2.17
@@ -151,6 +154,13 @@ packages:
 
   '@drizzle-team/brocli@0.11.0':
     resolution: {integrity: sha512-hD3pekGiPg0WPCCGAZmusBBJsDqGUR66Y452YgQsZOnkdQ7ViEPKuyP4huUGEZQefp8g34RRodXYmJ2TbCH+tg==}
+
+  '@effect/atom-react@4.0.0-beta.68':
+    resolution: {integrity: sha512-nu5qZHka7vMKVzalQow7u8uJAwJ2zlplQKPYNG/AdPs3VPNnKv611ulIyUE4HP1JzN3+dkvvXkeUIymEdiCUnQ==}
+    peerDependencies:
+      effect: ^4.0.0-beta.68
+      react: ^19.2.4
+      scheduler: '*'
 
   '@effect/language-service@0.86.1':
     resolution: {integrity: sha512-jfUuFdtNPKRZ4ZSrgTnfMHPIVq8L9cM+YGEylQ1lhIgNY23ZvfdPg0cUlWESd4q9aGvOWSA8E79AS0qe3j4ROw==}
@@ -1370,6 +1380,12 @@ snapshots:
       '@babel/helper-validator-identifier': 7.28.5
 
   '@drizzle-team/brocli@0.11.0': {}
+
+  '@effect/atom-react@4.0.0-beta.68(effect@4.0.0-beta.68)(react@19.2.6)(scheduler@0.27.0)':
+    dependencies:
+      effect: 4.0.0-beta.68
+      react: 19.2.6
+      scheduler: 0.27.0
 
   '@effect/language-service@0.86.1': {}
 

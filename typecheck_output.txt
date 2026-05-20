@@ -1,0 +1,4 @@
+
+> chat-app@0.0.0 typecheck /home/jlcanela/projects/classimed
+> tsc --noEmit
+

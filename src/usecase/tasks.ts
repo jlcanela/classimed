@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import { TaskRepository } from "../repo/task-repo";
 import type { Task } from "../db/schema";
 import type { PersistenceError } from "../domain/errors";
-import { Database } from "@/db/DB";
+import { Database, makeEffectDbClientFromDb } from "@/db/DB";
 
 export const listTasks: Effect.Effect<ReadonlyArray<Task>, PersistenceError, TaskRepository> =
   Effect.gen(function* () {
@@ -37,7 +37,8 @@ export const deleteTask = (
 
   export const dbAccess = Effect.gen(function* () {
     const db = yield* Database;
-    return yield* Effect.promise(() =>db.$client.exec(`SELECT 1`));
+    const client = makeEffectDbClientFromDb(db);
+    return yield* client.exec(`SELECT 1`);
     //return yield* repo.db.$client.query("SELECT * FROM tasks");
   })
   

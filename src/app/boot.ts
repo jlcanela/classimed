@@ -1,23 +1,32 @@
 import { Effect, Layer, ManagedRuntime } from "effect";
+import { Atom } from "effect/unstable/reactivity";
 import { makeTaskRepositoryLayer, TaskRepository } from "../repo/task-repo";
-import { Database } from "@/db/DB";
+import { GlossaryTermRepository } from "../repo/glossary-term-repo";
+import { Database, DatabaseLive } from "@/db/DB";
 import { Migration } from "@/db/Migration";
+import { Seed } from "@/db/Seed";
 
-export type AppRuntime = ManagedRuntime.ManagedRuntime<TaskRepository | Database, never>;
+export type AppRuntime = ManagedRuntime.ManagedRuntime<TaskRepository | GlossaryTermRepository | Database, never>;
 
-export const boot: Effect.Effect<AppRuntime, never, never> = Effect.gen(function* () {
-  const taskRepositoryLayer = Layer.unwrap(
-    Effect.gen(function* () {
-      const db = yield* Database;
-      const { migrate } = yield* Migration;
+const repositoryLayer = Layer.unwrap(
+  Effect.gen(function* () {
+    const db = yield* Database;
+    const { migrate } = yield* Migration;
+    const { seedGlossaryTerms } = yield* Seed;
 
-      yield* migrate(db).pipe(Effect.tapCause(Effect.logError), Effect.orDie);
+    yield* migrate(db).pipe(Effect.tapCause(Effect.logError), Effect.orDie);
+    yield* seedGlossaryTerms(db).pipe(Effect.tapCause(Effect.logError), Effect.orDie);
 
-      return makeTaskRepositoryLayer(db);
-    }),
-  ).pipe(Layer.provide(Database.layer), Layer.provide(Migration.layer));
+    return Layer.merge(
+      makeTaskRepositoryLayer(db),
+      GlossaryTermRepository.layer(db),
+    );
+  }),
+).pipe(Layer.provide(DatabaseLive), Layer.provide(Migration.layer), Layer.provide(Seed.layer));
 
-  const appLayer = Layer.mergeAll(Database.layer, taskRepositoryLayer);
+export const appLayer = Layer.mergeAll(DatabaseLive, repositoryLayer);
 
-  return ManagedRuntime.make(appLayer);
-});
+export const atomRuntime = Atom.runtime(appLayer);
+
+export const boot: Effect.Effect<AppRuntime, never, never> =
+  Effect.succeed(ManagedRuntime.make(appLayer));

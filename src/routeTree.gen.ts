@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as DesignRouteImport } from './routes/design'
 import { Route as ClassimedRouteImport } from './routes/_classimed'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ClassimedTodoRouteImport } from './routes/_classimed/todo'
 import { Route as ClassimedReaderRouteImport } from './routes/_classimed/reader'
+import { Route as ClassimedLibraryRouteImport } from './routes/_classimed/library'
 import { Route as ClassimedGlossaryRouteImport } from './routes/_classimed/glossary'
 
 const DesignRoute = DesignRouteImport.update({
@@ -29,9 +31,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ClassimedTodoRoute = ClassimedTodoRouteImport.update({
+  id: '/todo',
+  path: '/todo',
+  getParentRoute: () => ClassimedRoute,
+} as any)
 const ClassimedReaderRoute = ClassimedReaderRouteImport.update({
   id: '/reader',
   path: '/reader',
+  getParentRoute: () => ClassimedRoute,
+} as any)
+const ClassimedLibraryRoute = ClassimedLibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
   getParentRoute: () => ClassimedRoute,
 } as any)
 const ClassimedGlossaryRoute = ClassimedGlossaryRouteImport.update({
@@ -44,13 +56,17 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/design': typeof DesignRoute
   '/glossary': typeof ClassimedGlossaryRoute
+  '/library': typeof ClassimedLibraryRoute
   '/reader': typeof ClassimedReaderRoute
+  '/todo': typeof ClassimedTodoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/design': typeof DesignRoute
   '/glossary': typeof ClassimedGlossaryRoute
+  '/library': typeof ClassimedLibraryRoute
   '/reader': typeof ClassimedReaderRoute
+  '/todo': typeof ClassimedTodoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -58,20 +74,24 @@ export interface FileRoutesById {
   '/_classimed': typeof ClassimedRouteWithChildren
   '/design': typeof DesignRoute
   '/_classimed/glossary': typeof ClassimedGlossaryRoute
+  '/_classimed/library': typeof ClassimedLibraryRoute
   '/_classimed/reader': typeof ClassimedReaderRoute
+  '/_classimed/todo': typeof ClassimedTodoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/design' | '/glossary' | '/reader'
+  fullPaths: '/' | '/design' | '/glossary' | '/library' | '/reader' | '/todo'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/design' | '/glossary' | '/reader'
+  to: '/' | '/design' | '/glossary' | '/library' | '/reader' | '/todo'
   id:
     | '__root__'
     | '/'
     | '/_classimed'
     | '/design'
     | '/_classimed/glossary'
+    | '/_classimed/library'
     | '/_classimed/reader'
+    | '/_classimed/todo'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -103,11 +123,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_classimed/todo': {
+      id: '/_classimed/todo'
+      path: '/todo'
+      fullPath: '/todo'
+      preLoaderRoute: typeof ClassimedTodoRouteImport
+      parentRoute: typeof ClassimedRoute
+    }
     '/_classimed/reader': {
       id: '/_classimed/reader'
       path: '/reader'
       fullPath: '/reader'
       preLoaderRoute: typeof ClassimedReaderRouteImport
+      parentRoute: typeof ClassimedRoute
+    }
+    '/_classimed/library': {
+      id: '/_classimed/library'
+      path: '/library'
+      fullPath: '/library'
+      preLoaderRoute: typeof ClassimedLibraryRouteImport
       parentRoute: typeof ClassimedRoute
     }
     '/_classimed/glossary': {
@@ -122,12 +156,16 @@ declare module '@tanstack/react-router' {
 
 interface ClassimedRouteChildren {
   ClassimedGlossaryRoute: typeof ClassimedGlossaryRoute
+  ClassimedLibraryRoute: typeof ClassimedLibraryRoute
   ClassimedReaderRoute: typeof ClassimedReaderRoute
+  ClassimedTodoRoute: typeof ClassimedTodoRoute
 }
 
 const ClassimedRouteChildren: ClassimedRouteChildren = {
   ClassimedGlossaryRoute: ClassimedGlossaryRoute,
+  ClassimedLibraryRoute: ClassimedLibraryRoute,
   ClassimedReaderRoute: ClassimedReaderRoute,
+  ClassimedTodoRoute: ClassimedTodoRoute,
 }
 
 const ClassimedRouteWithChildren = ClassimedRoute._addFileChildren(

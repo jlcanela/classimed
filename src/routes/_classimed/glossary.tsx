@@ -1,60 +1,44 @@
-import { useState, useMemo } from 'react';
+import { RegistryProvider, useAtomValue, useAtomSet } from '@effect/atom-react';
 import { createFileRoute } from '@tanstack/react-router'
+import {
+  categoriesAtom,
+  categoryAtom,
+  categoryBadgeClassMapAtom,
+  categoryCountsAtom,
+  editingAtom,
+  filteredGlossaryAtom,
+  glossaryAtom,
+  glossaryLoadErrorAtom,
+  occurrencesByIdAtom,
+  queryAtom,
+} from './glossary/-atoms';
 
 export const Route = createFileRoute('/_classimed/glossary')({
   component: Glossary,
 })
 
-interface GlossaryEntry {
-  id: string;
-  char: string;
-  pinyin: string;
-  category: string;
-  frPrimary: string;
-  fr: string[];
-  note: string;
-}
-
-interface Category {
-  id: string;
-  label: string;
-  color: string;
-}
-
-// Mock data - replace with actual data source
-const CATEGORIES: Category[] = [
-  { id: 'medicine', label: 'Médecine', color: '#ff6b6b' },
-  { id: 'anatomy', label: 'Anatomie', color: '#4ecdc4' },
-  { id: 'treatment', label: 'Traitement', color: '#45b7d1' },
-];
-
-const GLOSSARY: GlossaryEntry[] = [
-  {
-    id: '1',
-    char: '脉',
-    pinyin: 'mài',
-    category: 'medicine',
-    frPrimary: 'pouls',
-    fr: ['pouls', 'artère'],
-    note: 'Le concept clé de la médecine chinoise',
-  },
-];
-
 function Glossary() {
-  const [query, setQuery] = useState('');
-  const [cat, setCat] = useState('all');
-  const [editing, setEditing] = useState<GlossaryEntry | null>(null);
+  return (
+    <RegistryProvider>
+      <GlossaryContent />
+    </RegistryProvider>
+  );
+}
 
-  const catColorMap = Object.fromEntries(CATEGORIES.map(c => [c.id, c.color]));
-
-  const filtered = useMemo(() => GLOSSARY.filter(t => {
-    if (cat !== 'all' && t.category !== cat) return false;
-    if (query) {
-      const q = query.toLowerCase();
-      return t.char.includes(query) || t.pinyin.toLowerCase().includes(q) || t.fr.some(f => f.toLowerCase().includes(q));
-    }
-    return true;
-  }), [query, cat]);
+function GlossaryContent() {
+  const categories = useAtomValue(categoriesAtom);
+  const glossary = useAtomValue(glossaryAtom);
+  const glossaryLoadError = useAtomValue(glossaryLoadErrorAtom);
+  const query = useAtomValue(queryAtom);
+  const cat = useAtomValue(categoryAtom);
+  const editing = useAtomValue(editingAtom);
+  const filtered = useAtomValue(filteredGlossaryAtom);
+  const categoryCounts = useAtomValue(categoryCountsAtom);
+  const categoryBadgeClassMap = useAtomValue(categoryBadgeClassMapAtom);
+  const occurrencesById = useAtomValue(occurrencesByIdAtom);
+  const setQuery = useAtomSet(queryAtom);
+  const setCat = useAtomSet(categoryAtom);
+  const setEditing = useAtomSet(editingAtom);
 
   return (
     <div className="page">
@@ -62,7 +46,7 @@ function Glossary() {
       <div className="page-head">
         <div>
           <h1>Glossaire</h1>
-          <p>{GLOSSARY.length} termes · enrichi au fil de la lecture</p>
+          <p>{glossary.length} termes · enrichi au fil de la lecture</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn btn-default">Exporter CSV</button>
@@ -72,6 +56,11 @@ function Glossary() {
 
       {/* Toolbar */}
       <div className="page-toolbar">
+        {glossaryLoadError && (
+          <div className="tiny" style={{ color: 'var(--red-8)', marginRight: 8 }}>
+            Erreur de chargement du glossaire: {glossaryLoadError}
+          </div>
+        )}
         <input
           type="text"
           placeholder="Rechercher en caractères, pinyin ou français…"
@@ -85,10 +74,10 @@ function Glossary() {
             onClick={() => setCat('all')}
             className={`chip ${cat === 'all' ? 'active' : ''}`}
           >
-            Tous <span className="muted">({GLOSSARY.length})</span>
+            Tous <span className="muted">({glossary.length})</span>
           </button>
-          {CATEGORIES.map(c => {
-            const n = GLOSSARY.filter(t => t.category === c.id).length;
+          {categories.map(c => {
+            const n = categoryCounts[c.id] ?? 0;
             if (!n) return null;
             return (
               <button
@@ -124,13 +113,9 @@ function Glossary() {
                 <td className="gloss-pinyin">{t.pinyin}</td>
                 <td>
                   <span
-                    className="badge"
-                    style={{
-                      background: catColorMap[t.category] || 'var(--gray-2)',
-                      color: '#fff',
-                    }}
+                    className={`badge ${categoryBadgeClassMap[t.category] || 'badge-gray'}`}
                   >
-                    {CATEGORIES.find(c => c.id === t.category)?.label}
+                    {categories.find(c => c.id === t.category)?.label}
                   </span>
                 </td>
                 <td className="gloss-fr">
@@ -138,7 +123,7 @@ function Glossary() {
                   {t.fr.length > 1 && <div className="tiny muted" style={{ marginTop: 2 }}>ou : {t.fr.slice(1).join(', ')}</div>}
                 </td>
                 <td className="tiny muted">{t.note}</td>
-                <td style={{ textAlign: 'center', fontWeight: 600 }}>{Math.floor(Math.random() * 30) + 1}</td>
+                <td style={{ textAlign: 'center', fontWeight: 600 }}>{occurrencesById[t.id] ?? 1}</td>
                 <td style={{ textAlign: 'center' }}>⋮</td>
               </tr>
             ))}

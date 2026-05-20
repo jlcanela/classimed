@@ -1,11 +1,10 @@
 import { Context, Layer, Effect } from "effect";
-import type { PgliteDatabase } from "drizzle-orm/pglite";
-import type { EmptyRelations } from "drizzle-orm";
 import { eq, asc } from "drizzle-orm";
 import { tasks, type Task } from "../db/schema";
 import { PersistenceError } from "../domain/errors";
+import { makeEffectDrizzle, type DBType } from "../db/DB";
 
-type AppDb = PgliteDatabase<EmptyRelations>;
+type AppDb = DBType;
 
 export interface ITaskRepository {
   readonly list: () => Effect.Effect<ReadonlyArray<Task>, PersistenceError>;
@@ -17,45 +16,45 @@ export interface ITaskRepository {
 export class TaskRepository extends Context.Service<TaskRepository, ITaskRepository>()("TaskRepository") {}
 
 export function makeTaskRepositoryLayer(db: AppDb): Layer.Layer<TaskRepository> {
+  const effectDb = makeEffectDrizzle(db);
+
   return Layer.succeed(TaskRepository, {
     list: () =>
-      Effect.tryPromise({
-        try: () => db.select().from(tasks).orderBy(asc(tasks.createdAt)),
-        catch: (e) => new PersistenceError({ cause: e }),
-      }),
+      effectDb
+        .select((typedDb) => typedDb.select().from(tasks).orderBy(asc(tasks.createdAt)))
+        .pipe(Effect.mapError((e) => new PersistenceError({ cause: e }))),
 
     create: (title: string) =>
-      Effect.tryPromise({
-        try: async () => {
-          const [task] = await db
+      effectDb
+        .insert(async (typedDb) => {
+          const [task] = await typedDb
             .insert(tasks)
             .values({ id: crypto.randomUUID(), title })
             .returning();
           if (!task) throw new Error("Insert returned no rows");
           return task;
-        },
-        catch: (e) => new PersistenceError({ cause: e }),
-      }),
+        })
+        .pipe(Effect.mapError((e) => new PersistenceError({ cause: e }))),
 
     setCompleted: (id: string, completed: boolean) =>
-      Effect.tryPromise({
-        try: () =>
-          db
+      effectDb
+        .update((typedDb) =>
+          typedDb
             .update(tasks)
             .set({ completed })
             .where(eq(tasks.id, id))
             .then(() => undefined),
-        catch: (e) => new PersistenceError({ cause: e }),
-      }),
+        )
+        .pipe(Effect.mapError((e) => new PersistenceError({ cause: e }))),
 
     delete: (id: string) =>
-      Effect.tryPromise({
-        try: () =>
-          db
+      effectDb
+        .delete((typedDb) =>
+          typedDb
             .delete(tasks)
             .where(eq(tasks.id, id))
             .then(() => undefined),
-        catch: (e) => new PersistenceError({ cause: e }),
-      }),
+        )
+        .pipe(Effect.mapError((e) => new PersistenceError({ cause: e }))),
   });
 }

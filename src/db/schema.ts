@@ -1,6 +1,7 @@
 import {
   pgTable,
   text,
+  jsonb,
   integer,
   real,
   boolean,
@@ -55,8 +56,10 @@ export const glossaryTerms = pgTable("glossary_terms", {
   char: text("char").notNull().unique(),
   pinyin: text("pinyin").notNull(),
   category: text("category").notNull(),
+  fr: text("fr").array().notNull().default([]),
   frPrimary: text("fr_primary").notNull(),
-  notes: text("notes"),
+  refs: jsonb("refs").$type<Record<string, string>>(),
+  note: text("note"),
   isPreseeded: boolean("is_preseeded").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -154,3 +157,7 @@ export const tasks = pgTable("tasks", {
 });
 
 export type Task = typeof tasks.$inferSelect;
+
+export const schema = {
+  glossaryTerms,
+}

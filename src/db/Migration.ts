@@ -1,8 +1,11 @@
 import { Context, Effect, Layer } from "effect";
 import type { DBType } from "./DB";
-import { DatabaseError } from "./DB";
+import { DatabaseError, makeEffectDbClientFromDb } from "./DB";
 
-const migrationSqlFiles = import.meta.glob("/drizzle/**/migration.sql", {
+const migrationSqlFiles = import.meta.glob([
+    "/src/drizzle/**/migration.sql",
+    "/drizzle/**/migration.sql",
+], {
     query: "?raw",
     import: "default",
     eager: true,
@@ -29,47 +32,45 @@ export class Migration extends Context.Service<Migration, {
         Migration,
         Effect.gen(function* () {
             const migrate = (drizzleClient: DBType) =>
-                Effect.tryPromise({
-                    try: async () => {
-                        const client = drizzleClient.$client;
+                Effect.gen(function* () {
+                    const client = makeEffectDbClientFromDb(drizzleClient);
 
-                        await client.exec(`
-                            CREATE TABLE IF NOT EXISTS __drizzle_migrations_browser (
-                                id TEXT PRIMARY KEY,
-                                applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-                            )
-                        `);
+                    yield* client.exec(`
+                        CREATE TABLE IF NOT EXISTS __drizzle_migrations_browser (
+                            id TEXT PRIMARY KEY,
+                            applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                        )
+                    `);
 
-                        for (const migration of getOrderedMigrationFiles()) {
-                            const appliedResult = await client.query<{ count: number | string }>(
-                                "SELECT COUNT(*)::int AS count FROM __drizzle_migrations_browser WHERE id = $1",
+                    for (const migration of getOrderedMigrationFiles()) {
+                        const appliedResult = yield* client.query<{ count: number | string }>(
+                            "SELECT COUNT(*)::int AS count FROM __drizzle_migrations_browser WHERE id = $1",
+                            [migration.id],
+                        );
+
+                        const alreadyApplied = Number(appliedResult.rows[0]?.count ?? 0) > 0;
+                        if (alreadyApplied) {
+                            continue;
+                        }
+
+                        yield* client.exec("BEGIN");
+
+                        const applyMigration = Effect.gen(function* () {
+                            for (const statement of splitMigrationStatements(migration.sql)) {
+                                yield* client.exec(statement);
+                            }
+
+                            yield* client.query(
+                                "INSERT INTO __drizzle_migrations_browser (id) VALUES ($1)",
                                 [migration.id],
                             );
+                        });
 
-                            const alreadyApplied = Number(appliedResult.rows[0]?.count ?? 0) > 0;
-                            if (alreadyApplied) {
-                                continue;
-                            }
-
-                            await client.exec("BEGIN");
-                            try {
-                                for (const statement of splitMigrationStatements(migration.sql)) {
-                                    await client.exec(statement);
-                                }
-
-                                await client.query(
-                                    "INSERT INTO __drizzle_migrations_browser (id) VALUES ($1)",
-                                    [migration.id],
-                                );
-
-                                await client.exec("COMMIT");
-                            } catch (error) {
-                                await client.exec("ROLLBACK");
-                                throw error;
-                            }
-                        }
-                    },
-                    catch: (cause) => new DatabaseError({ cause }),
+                        yield* applyMigration.pipe(
+                            Effect.tapError(() => client.exec("ROLLBACK")),
+                            Effect.andThen(client.exec("COMMIT")),
+                        );
+                    }
                 });
 
             return Migration.of({
