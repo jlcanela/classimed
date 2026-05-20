@@ -1,8 +1,10 @@
 import { AsyncResult, Atom } from 'effect/unstable/reactivity';
 import { Effect } from 'effect';
 import { atomRuntime } from '../../../app/boot';
-import { listGlossaryTerms } from '../../../usecase/glossary-terms';
-import type { GlossaryTerm } from '../../../db/schema';
+import { createGlossaryTerm, listGlossaryTerms, updateGlossaryTerm } from '../../../usecase/glossary-terms';
+import type { GlossaryTerm, InsertGlossaryTerm } from '../../../db/schema';
+
+export type EditableGlossaryTerm = InsertGlossaryTerm & { id: string };
 
 export interface GlossaryEntry {
 	id: string;
@@ -47,6 +49,41 @@ export const glossaryAsyncAtom = atomRuntime.atom(
 		const terms = yield* listGlossaryTerms;
 		return terms.map(toGlossaryEntry);
 	}),
+).pipe(Atom.withReactivity(['glossary-terms']));
+
+const toNewGlossaryTerm = (term: EditableGlossaryTerm) => ({
+	id: term.id,
+	char: term.char,
+	pinyin: term.pinyin,
+	category: term.category,
+	fr: term.fr ?? [],
+	frPrimary: term.frPrimary,
+	refs: term.refs ?? undefined,
+	note: term.note ?? '',
+});
+
+const toUpdateGlossaryPatch = (term: EditableGlossaryTerm) => ({
+	char: term.char,
+	pinyin: term.pinyin,
+	category: term.category,
+	fr: term.fr ?? [],
+	frPrimary: term.frPrimary,
+	refs: term.refs ?? undefined,
+	note: term.note ?? '',
+});
+
+export const createGlossaryTermAtom = atomRuntime.fn<EditableGlossaryTerm>()(
+	Effect.fn(function* (term) {
+		yield* createGlossaryTerm(toNewGlossaryTerm(term));
+	}),
+	{ reactivityKeys: ['glossary-terms'] },
+);
+
+export const updateGlossaryTermAtom = atomRuntime.fn<EditableGlossaryTerm>()(
+	Effect.fn(function* (term) {
+		yield* updateGlossaryTerm(term.id, toUpdateGlossaryPatch(term));
+	}),
+	{ reactivityKeys: ['glossary-terms'] },
 );
 
 export const glossaryAtom = Atom.readable((get): GlossaryEntry[] => {
@@ -61,7 +98,7 @@ export const glossaryLoadErrorAtom = Atom.readable((get): string | null => {
 
 export const queryAtom = Atom.make('');
 export const categoryAtom = Atom.make('all');
-export const editingAtom = Atom.make<GlossaryEntry | null>(null);
+export const editingAtom = Atom.make<EditableGlossaryTerm | null>(null);
 
 export const categoryColorMapAtom = Atom.readable((get) =>
 	Object.fromEntries(get(categoriesAtom).map((category) => [category.id, category.color])),

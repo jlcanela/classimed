@@ -5,14 +5,19 @@ import {
   categoryAtom,
   categoryBadgeClassMapAtom,
   categoryCountsAtom,
+  createGlossaryTermAtom,
+  type EditableGlossaryTerm,
   editingAtom,
   filteredGlossaryAtom,
   glossaryAtom,
   glossaryLoadErrorAtom,
   occurrencesByIdAtom,
   queryAtom,
+  updateGlossaryTermAtom,
 } from './glossary/-atoms';
 import { CreateUpdateModal } from './glossary/-CreateUpdate';
+
+type ModalMode = 'create' | 'update';
 
 export const Route = createFileRoute('/_classimed/glossary')({
   component: Glossary,
@@ -37,9 +42,35 @@ function GlossaryContent() {
   const categoryCounts = useAtomValue(categoryCountsAtom);
   const categoryBadgeClassMap = useAtomValue(categoryBadgeClassMapAtom);
   const occurrencesById = useAtomValue(occurrencesByIdAtom);
+  const modalMode: ModalMode = editing && !glossary.some((item) => item.id === editing.id) ? 'create' : 'update';
   const setQuery = useAtomSet(queryAtom);
   const setCat = useAtomSet(categoryAtom);
   const setEditing = useAtomSet(editingAtom);
+  const createGlossaryTerm = useAtomSet(createGlossaryTermAtom, { mode: 'promise' });
+  const persistGlossaryTerm = useAtomSet(updateGlossaryTermAtom, { mode: 'promise' });
+
+  const handleSave = async (term: EditableGlossaryTerm) => {
+    const isExistingTerm = glossary.some((item) => item.id === term.id);
+    if (isExistingTerm) {
+      await persistGlossaryTerm(term);
+    } else {
+      await createGlossaryTerm(term);
+    }
+    setEditing(null);
+  };
+
+  const handleCreate = () => {
+    setEditing({
+      id: crypto.randomUUID(),
+      char: '',
+      pinyin: '',
+      category: categories[0]?.id ?? 'concept',
+      fr: [],
+      frPrimary: '',
+      refs: undefined,
+      note: '',
+    });
+  };
 
   return (
     <div className="page">
@@ -51,7 +82,7 @@ function GlossaryContent() {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn btn-default">Exporter CSV</button>
-          <button className="btn btn-filled">Nouveau terme</button>
+          <button className="btn btn-filled" onClick={handleCreate}>Nouveau terme</button>
         </div>
       </div>
 
@@ -135,8 +166,10 @@ function GlossaryContent() {
       {/* Edit Modal */}
       <CreateUpdateModal 
         editing={editing}
+        mode={modalMode}
         categories={categories}
         onClose={() => setEditing(null)}
+        onSave={handleSave}
       />
     </div>
   );
