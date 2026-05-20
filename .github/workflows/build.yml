@@ -45,7 +45,7 @@ jobs:
 
       - name: Verify iframe static design resources
         run: |
-          test -f 'dist/design/ClassiMed Translate.html'
+          test -f 'dist/design/ClassiMedTranslate.html'
           test -f dist/design/styles.css
           test -f dist/design/data.js
           test -f dist/design/app.jsx
