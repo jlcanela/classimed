@@ -12,6 +12,7 @@ import {
   occurrencesByIdAtom,
   queryAtom,
 } from './glossary/-atoms';
+import { CreateUpdateModal } from './glossary/-CreateUpdate';
 
 export const Route = createFileRoute('/_classimed/glossary')({
   component: Glossary,
@@ -132,45 +133,11 @@ function GlossaryContent() {
       </div>
 
       {/* Edit Modal */}
-      {editing && (
-        <>
-          <div className="scrim" onClick={() => setEditing(null)}></div>
-          <div className="modal">
-            <div className="modal-header">
-              <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Modifier le terme</h2>
-              <button
-                onClick={() => setEditing(null)}
-                className="btn btn-icon"
-                style={{ background: 'transparent', color: 'var(--gray-6)' }}
-              >
-                ×
-              </button>
-            </div>
-            <div className="modal-body">
-              <div style={{ marginBottom: 20 }}>
-                <p><strong>Caractères :</strong> {editing.char}</p>
-                <p><strong>Pinyin :</strong> {editing.pinyin}</p>
-                <p><strong>Traduction :</strong> {editing.fr.join(', ')}</p>
-                <p><strong>Notes :</strong> {editing.note}</p>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button
-                onClick={() => setEditing(null)}
-                className="btn btn-default"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={() => setEditing(null)}
-                className="btn btn-filled"
-              >
-                Enregistrer
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+      <CreateUpdateModal 
+        editing={editing}
+        categories={categories}
+        onClose={() => setEditing(null)}
+      />
     </div>
   );
 }
