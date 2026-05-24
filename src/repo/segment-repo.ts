@@ -1,7 +1,7 @@
 import { Context, Effect, Layer } from "effect";
 import { asc, eq } from "drizzle-orm";
 import { type InsertSegment, type Segment, segments } from "../db/schema";
-import { makeEffectDrizzle, type DBType } from "../db/DB";
+import { DatabaseError, makeEffectDrizzle, type DBType } from "../db/DB";
 import { PersistenceError } from "../domain/errors";
 
 type AppDb = DBType;
@@ -27,61 +27,57 @@ export class SegmentRepository extends Context.Service<SegmentRepository, ISegme
     return Layer.succeed(SegmentRepository, {
       listByDocumentId: (documentId) =>
         effectDb
-          .select((typedDb) => typedDb
-            .select()
-            .from(segments)
-            .where(eq(segments.documentId, documentId))
-            .orderBy(asc(segments.position)))
+          .run((typedDb) =>
+            typedDb
+              .select()
+              .from(segments)
+              .where(eq(segments.documentId, documentId))
+              .orderBy(asc(segments.position)),
+          )
           .pipe(Effect.mapError((cause) => new PersistenceError({ cause }))),
 
       createBatch: (items) =>
-        effectDb
-          .insert(async (typedDb) => {
-            if (items.length === 0) {
-              return [];
-            }
-
-            return typedDb
-              .insert(segments)
-              .values(Array.from(items))
-              .returning();
-          })
-          .pipe(Effect.mapError((cause) => new PersistenceError({ cause }))),
+        items.length === 0
+          ? Effect.succeed([])
+          : effectDb
+              .run((typedDb) => typedDb.insert(segments).values(Array.from(items)).returning())
+              .pipe(Effect.mapError((cause) => new PersistenceError({ cause }))),
 
       updateTexts: (input) =>
         effectDb
-          .update(async (typedDb) => {
-            const [updated] = await typedDb
+          .run((typedDb) =>
+            typedDb
               .update(segments)
-              .set({
-                glossText: input.glossText,
-                frText: input.frText,
-                updatedAt: new Date(),
-              })
+              .set({ glossText: input.glossText, frText: input.frText, updatedAt: new Date() })
               .where(eq(segments.id, input.segmentId))
-              .returning();
-
-            if (!updated) throw new Error("Segment not found for text update");
-            return updated;
-          })
-          .pipe(Effect.mapError((cause) => new PersistenceError({ cause }))),
+              .returning(),
+          )
+          .pipe(
+            Effect.flatMap((rows) =>
+              rows[0]
+                ? Effect.succeed(rows[0])
+                : Effect.fail(new DatabaseError({ cause: new Error("Segment not found for text update") })),
+            ),
+            Effect.mapError((cause) => new PersistenceError({ cause })),
+          ),
 
       setFlagged: (input) =>
         effectDb
-          .update(async (typedDb) => {
-            const [updated] = await typedDb
+          .run((typedDb) =>
+            typedDb
               .update(segments)
-              .set({
-                isFlagged: input.isFlagged,
-                updatedAt: new Date(),
-              })
+              .set({ isFlagged: input.isFlagged, updatedAt: new Date() })
               .where(eq(segments.id, input.segmentId))
-              .returning();
-
-            if (!updated) throw new Error("Segment not found for flag update");
-            return updated;
-          })
-          .pipe(Effect.mapError((cause) => new PersistenceError({ cause }))),
+              .returning(),
+          )
+          .pipe(
+            Effect.flatMap((rows) =>
+              rows[0]
+                ? Effect.succeed(rows[0])
+                : Effect.fail(new DatabaseError({ cause: new Error("Segment not found for flag update") })),
+            ),
+            Effect.mapError((cause) => new PersistenceError({ cause })),
+          ),
     });
   }
 }

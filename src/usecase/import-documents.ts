@@ -87,13 +87,15 @@ export const createImportedDocumentAndSegments = (
     const segmentRows = toSegments(createdDocument.id, input.segmentationLines);
     yield* segmentRepository.createBatch(segmentRows);
 
-    console.info("[import] document creation successful", {
-      documentId: createdDocument.id,
-      title: createdDocument.title,
-      type: createdDocument.type,
-      segmentCount: segmentRows.length,
-      status: createdDocument.status,
-    });
+    yield* Effect.logInfo("import: document creation successful").pipe(
+      Effect.annotateLogs({
+        documentId: createdDocument.id,
+        title: createdDocument.title,
+        type: createdDocument.type,
+        segmentCount: String(segmentRows.length),
+        status: createdDocument.status,
+      }),
+    );
 
     return {
       documentId: createdDocument.id,

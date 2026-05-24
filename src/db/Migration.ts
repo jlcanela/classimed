@@ -1,4 +1,4 @@
-import { Context, Effect, Layer } from "effect";
+import { Context, Effect, Exit, Layer } from "effect";
 import type { DBType } from "./DB";
 import { DatabaseError, makeEffectDbClientFromDb } from "./DB";
 
@@ -42,35 +42,42 @@ export class Migration extends Context.Service<Migration, {
                         )
                     `);
 
-                    for (const migration of getOrderedMigrationFiles()) {
-                        const appliedResult = yield* client.query<{ count: number | string }>(
-                            "SELECT COUNT(*)::int AS count FROM __drizzle_migrations_browser WHERE id = $1",
-                            [migration.id],
-                        );
+                    yield* Effect.forEach(
+                        getOrderedMigrationFiles(),
+                        (migration) =>
+                            Effect.gen(function* () {
+                                const appliedResult = yield* client.query<{ count: number | string }>(
+                                    "SELECT COUNT(*)::int AS count FROM __drizzle_migrations_browser WHERE id = $1",
+                                    [migration.id],
+                                );
 
-                        const alreadyApplied = Number(appliedResult.rows[0]?.count ?? 0) > 0;
-                        if (alreadyApplied) {
-                            continue;
-                        }
+                                const alreadyApplied = Number(appliedResult.rows[0]?.count ?? 0) > 0;
+                                if (alreadyApplied) return;
 
-                        yield* client.exec("BEGIN");
+                                const applyMigration = Effect.gen(function* () {
+                                    yield* Effect.forEach(
+                                        splitMigrationStatements(migration.sql),
+                                        (statement) => client.exec(statement),
+                                        { concurrency: 1 },
+                                    );
+                                    yield* client.query(
+                                        "INSERT INTO __drizzle_migrations_browser (id) VALUES ($1)",
+                                        [migration.id],
+                                    );
+                                });
 
-                        const applyMigration = Effect.gen(function* () {
-                            for (const statement of splitMigrationStatements(migration.sql)) {
-                                yield* client.exec(statement);
-                            }
-
-                            yield* client.query(
-                                "INSERT INTO __drizzle_migrations_browser (id) VALUES ($1)",
-                                [migration.id],
-                            );
-                        });
-
-                        yield* applyMigration.pipe(
-                            Effect.tapError(() => client.exec("ROLLBACK")),
-                            Effect.andThen(client.exec("COMMIT")),
-                        );
-                    }
+                                yield* Effect.acquireUseRelease(
+                                    client.exec("BEGIN"),
+                                    () => applyMigration,
+                                    (_, exit) =>
+                                        (Exit.isSuccess(exit)
+                                            ? client.exec("COMMIT")
+                                            : client.exec("ROLLBACK")
+                                        ).pipe(Effect.orDie),
+                                );
+                            }),
+                        { concurrency: 1 },
+                    );
                 });
 
             return Migration.of({

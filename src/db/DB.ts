@@ -46,10 +46,7 @@ export type EffectDbClient = {
 };
 
 export type EffectDrizzle = {
-    select: <TResult>(build: (db: DBType) => Promise<TResult>) => Effect.Effect<TResult, DatabaseError>;
-    update: <TResult>(build: (db: DBType) => Promise<TResult>) => Effect.Effect<TResult, DatabaseError>;
-    delete: <TResult>(build: (db: DBType) => Promise<TResult>) => Effect.Effect<TResult, DatabaseError>;
-    insert: <TResult>(build: (db: DBType) => Promise<TResult>) => Effect.Effect<TResult, DatabaseError>;
+    run: <TResult>(build: (db: DBType) => Promise<TResult>) => Effect.Effect<TResult, DatabaseError>;
 };
 
 const liftDbPromise = <TResult>(build: () => Promise<TResult>) =>
@@ -79,10 +76,7 @@ export const makeEffectDbClient = (client: PGlite): EffectDbClient => ({
 export const makeEffectDbClientFromDb = (db: DBType): EffectDbClient => makeEffectDbClient(db.$client);
 
 export const makeEffectDrizzle = (db: DBType): EffectDrizzle => ({
-    select: (build) => liftDbPromise(() => build(db)),
-    update: (build) => liftDbPromise(() => build(db)),
-    delete: (build) => liftDbPromise(() => build(db)),
-    insert: (build) => liftDbPromise(() => build(db)),
+    run: (build) => liftDbPromise(() => build(db)),
 });
 
 export class DatabaseError extends Schema.TaggedErrorClass<DatabaseError>()("DatabaseError", {

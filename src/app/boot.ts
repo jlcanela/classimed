@@ -36,5 +36,6 @@ export const appLayer = Layer.mergeAll(DatabaseLive, repositoryLayer);
 
 export const atomRuntime = Atom.runtime(appLayer);
 
-export const boot: Effect.Effect<AppRuntime, never, never> =
-  Effect.succeed(ManagedRuntime.make(appLayer));
+export const runtime = ManagedRuntime.make(appLayer);
+
+export const boot: Effect.Effect<AppRuntime, never, never> = Effect.sync(() => runtime);

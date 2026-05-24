@@ -59,7 +59,4 @@ export const listDocuments: Effect.Effect<ReadonlyArray<LibraryDocument>, Persis
 export const createDocument = (
   document: NewDocument,
 ): Effect.Effect<Document, PersistenceError, DocumentRepository> =>
-  Effect.gen(function* () {
-    const repository = yield* DocumentRepository;
-    return yield* repository.create(document);
-  });
+  DocumentRepository.pipe(Effect.flatMap((repo) => repo.create(document)));

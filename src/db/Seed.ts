@@ -780,6 +780,11 @@ const glossarySeedData: ReadonlyArray<GlossarySeedEntry> = [
 
 const GLOSSARY_SEED_BATCH_SIZE = 30;
 
+const chunk = <T>(arr: ReadonlyArray<T>, size: number): T[][] =>
+  Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
+    arr.slice(i * size, (i + 1) * size) as T[],
+  );
+
 export class Seed extends Context.Service<Seed, {
   seedGlossaryTerms: (drizzleClient: DBType) => Effect.Effect<void, DatabaseError>;
 }>()("myapp/db/Seed") {
@@ -790,7 +795,7 @@ export class Seed extends Context.Service<Seed, {
 				Effect.gen(function* () {
 					const effectDb = makeEffectDrizzle(drizzleClient);
 
-					const [{ value: glossaryCount }] = yield* effectDb.select((db) =>
+					const [{ value: glossaryCount }] = yield* effectDb.run((db) =>
 						db.select({ value: count() }).from(glossaryTerms),
 					);
 
@@ -798,21 +803,17 @@ export class Seed extends Context.Service<Seed, {
 						return;
 					}
 
-          for (let index = 0; index < glossarySeedData.length; index += GLOSSARY_SEED_BATCH_SIZE) {
-            const batch = glossarySeedData
-              .slice(index, index + GLOSSARY_SEED_BATCH_SIZE)
-              .map((term) => ({
-                ...term,
-                isPreseeded: true,
-              }));
-
-            yield* effectDb.insert((db) =>
-              db
-                .insert(glossaryTerms)
-                .values(batch)
-                .onConflictDoNothing({ target: glossaryTerms.id }),
-            );
-          }
+          yield* Effect.forEach(
+            chunk(glossarySeedData, GLOSSARY_SEED_BATCH_SIZE),
+            (batch) =>
+              effectDb.run((db) =>
+                db
+                  .insert(glossaryTerms)
+                  .values(batch.map((term) => ({ ...term, isPreseeded: true })))
+                  .onConflictDoNothing({ target: glossaryTerms.id }),
+              ),
+            { concurrency: 1 },
+          );
         });
 
       return Seed.of({

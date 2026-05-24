@@ -1,5 +1,5 @@
-import { Effect, ManagedRuntime } from "effect";
-import { appLayer } from "@/app/boot";
+import { Effect } from "effect";
+import { runtime } from "@/app/boot";
 import { createImportedDocumentAndSegments } from "@/usecase/import-documents";
 
 export type ImportMode = "paste" | "pdf" | "scan";
@@ -47,8 +47,6 @@ export type FinalizeImportInput = {
   documentActive: boolean;
   segmentationLines: ReadonlyArray<SegmentationLine>;
 };
-
-const importRuntime = ManagedRuntime.make(appLayer);
 
 const defaultOcrLines: OcrLine[] = [
   { txt: "上古天真論篇第一", conf: 0.99 },
@@ -100,12 +98,14 @@ const runSegmentationMock = Effect.fn(function* (input: { lines: OcrLine[] }) {
 });
 
 const finalizeImport = Effect.fn(function* (input: FinalizeImportInput) {
-  console.info("[import] finalize start", {
-    mode: input.mode,
-    sourceLabel: input.sourceLabel,
-    documentTitle: input.documentTitle,
-    segmentationCount: input.segmentationLines.length,
-  });
+  yield* Effect.logInfo("import: finalize start").pipe(
+    Effect.annotateLogs({
+      mode: input.mode,
+      sourceLabel: input.sourceLabel,
+      documentTitle: input.documentTitle,
+      segmentationCount: String(input.segmentationLines.length),
+    }),
+  );
 
   const created = yield* createImportedDocumentAndSegments(input);
 
@@ -115,23 +115,18 @@ const finalizeImport = Effect.fn(function* (input: FinalizeImportInput) {
     message: "Document importe et pret pour traduction.",
   } satisfies FinalizeImportResult;
 
-  console.info("[import] finalize success", result);
+  yield* Effect.logInfo("import: finalize success").pipe(
+    Effect.annotateLogs({ documentId: result.documentId, title: result.title }),
+  );
+
   return result;
 });
 
 export const callRunOcrMock = (input: { mode: ImportMode; pastedText: string }) =>
-  importRuntime.runPromise(runOcrMock(input));
+  runtime.runPromise(runOcrMock(input));
 
 export const callRunSegmentationMock = (input: { lines: OcrLine[] }) =>
-  importRuntime.runPromise(runSegmentationMock(input));
+  runtime.runPromise(runSegmentationMock(input));
 
 export const callFinalizeImport = (input: FinalizeImportInput) =>
-  importRuntime.runPromise(finalizeImport(input)).catch((error) => {
-    console.error("[import] finalize failed", {
-      error,
-      sourceLabel: input.sourceLabel,
-      mode: input.mode,
-      segmentationCount: input.segmentationLines.length,
-    });
-    throw error;
-  });
+  runtime.runPromise(finalizeImport(input));

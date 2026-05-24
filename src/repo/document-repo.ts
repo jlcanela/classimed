@@ -1,7 +1,7 @@
 import { Context, Effect, Layer } from "effect";
 import { asc } from "drizzle-orm";
 import { type Document, documents, type InsertDocument } from "../db/schema";
-import { makeEffectDrizzle, type DBType } from "../db/DB";
+import { DatabaseError, makeEffectDrizzle, type DBType } from "../db/DB";
 import { PersistenceError } from "../domain/errors";
 
 type AppDb = DBType;
@@ -20,21 +20,20 @@ export class DocumentRepository extends Context.Service<DocumentRepository, IDoc
     return Layer.succeed(DocumentRepository, {
       list: () =>
         effectDb
-          .select((typedDb) => typedDb.select().from(documents).orderBy(asc(documents.updatedAt)))
+          .run((typedDb) => typedDb.select().from(documents).orderBy(asc(documents.updatedAt)))
           .pipe(Effect.mapError((cause) => new PersistenceError({ cause }))),
 
       create: (document) =>
         effectDb
-          .insert(async (typedDb) => {
-            const [created] = await typedDb
-              .insert(documents)
-              .values(document)
-              .returning();
-
-            if (!created) throw new Error("Insert returned no document row");
-            return created;
-          })
-          .pipe(Effect.mapError((cause) => new PersistenceError({ cause }))),
+          .run((typedDb) => typedDb.insert(documents).values(document).returning())
+          .pipe(
+            Effect.flatMap((rows) =>
+              rows[0]
+                ? Effect.succeed(rows[0])
+                : Effect.fail(new DatabaseError({ cause: new Error("Insert returned no document row") })),
+            ),
+            Effect.mapError((cause) => new PersistenceError({ cause })),
+          ),
     });
   }
 }
