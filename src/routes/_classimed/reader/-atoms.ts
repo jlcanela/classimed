@@ -104,6 +104,7 @@ export const readerSegmentsAtom = Atom.readable((get): ReadonlyArray<ReaderSegme
 
 export const readerFocusedSegmentIdAtom = Atom.make<string | null>(null);
 export const readerShowGlossAtom = Atom.make(true);
+export const readerSelectedGlossaryTermIdAtom = Atom.make<string | null>(null);
 
 export type ReaderEditingCell = {
   segmentId: string;

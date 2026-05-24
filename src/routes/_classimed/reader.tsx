@@ -7,6 +7,7 @@ import {
   readerEditingCellAtom,
   readerFocusedSegmentIdAtom,
   readerLoadErrorAtom,
+  readerSelectedGlossaryTermIdAtom,
   readerSegmentsAtom,
   readerSelectedDocumentIdAtom,
   readerShowGlossAtom,
@@ -20,7 +21,11 @@ export const Route = createFileRoute("/_classimed/reader")({
   component: RouteComponent,
 });
 
-function renderSourceWithTerms(text: string, glossary: ReadonlyArray<GlossaryEntry>) {
+function renderSourceWithTerms(
+  text: string,
+  glossary: ReadonlyArray<GlossaryEntry>,
+  onTermClick: (term: GlossaryEntry) => void,
+) {
   if (!text || glossary.length === 0) {
     return text;
   }
@@ -41,7 +46,12 @@ function renderSourceWithTerms(text: string, glossary: ReadonlyArray<GlossaryEnt
 
     if (matched) {
       out.push(
-        <span key={`term-${i}`} className="term">
+        <span
+          key={`term-${i}`}
+          className="term"
+          onClick={() => onTermClick(matched)}
+          title={matched.frPrimary}
+        >
           {matched.char}
         </span>,
       );
@@ -80,11 +90,16 @@ function RouteComponent() {
   const editingCell = useAtomValue(readerEditingCellAtom);
   const editValue = useAtomValue(readerEditValueAtom);
   const loadError = useAtomValue(readerLoadErrorAtom);
+  const selectedGlossaryTermId = useAtomValue(readerSelectedGlossaryTermIdAtom);
   const glossary = useAtomValue(glossaryAtom);
+  const selectedGlossaryTerm = selectedGlossaryTermId
+    ? glossary.find((term) => term.id === selectedGlossaryTermId) ?? null
+    : null;
 
   const setSelectedDocumentId = useAtomSet(readerSelectedDocumentIdAtom);
   const setFocusedSegmentId = useAtomSet(readerFocusedSegmentIdAtom);
   const setShowGloss = useAtomSet(readerShowGlossAtom);
+  const setSelectedGlossaryTermId = useAtomSet(readerSelectedGlossaryTermIdAtom);
   const setEditingCell = useAtomSet(readerEditingCellAtom);
   const setEditValue = useAtomSet(readerEditValueAtom);
   const saveSegmentCell = useAtomSet(saveReaderSegmentCellAtom, { mode: "promise" });
@@ -185,6 +200,7 @@ function RouteComponent() {
                   onClick={() => {
                     setSelectedDocumentId(document.id);
                     setFocusedSegmentId(null);
+                    setSelectedGlossaryTermId(null);
                     setEditingCell(null);
                     setEditValue("");
                   }}
@@ -231,6 +247,7 @@ function RouteComponent() {
                         showGloss={showGloss}
                         isFocused={isFocused}
                         glossary={glossary}
+                        onTermClick={(term) => setSelectedGlossaryTermId(term.id)}
                         editingCell={editingCell}
                         editValue={editValue}
                         onStartEdit={handleStartEdit}
@@ -252,6 +269,41 @@ function RouteComponent() {
               <div className="ws-margin scroll-y">
                 <div className="ws-margin-h">Notes de la marge</div>
                 <div className="tiny muted">Les notes et la file de relecture sont deja modelisees dans le schema (annotations + review_queue). Le wiring UI sera branche dans une iteration suivante.</div>
+
+                <hr className="divider" style={{ marginTop: 18 }} />
+
+                <div className="ws-margin-h" style={{ marginTop: 4 }}>Terme epingle</div>
+                {selectedGlossaryTerm ? (
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 6 }}>
+                      <button className="iconbtn" onClick={() => setSelectedGlossaryTermId(null)} title="Fermer la fiche du terme" aria-label="Fermer la fiche du terme">
+                        ×
+                      </button>
+                    </div>
+                    <div className="gloss-char" style={{ fontSize: 28 }}>{selectedGlossaryTerm.char}</div>
+                    <div className="gloss-pinyin tiny" style={{ marginTop: 2 }}>{selectedGlossaryTerm.pinyin}</div>
+                    <div className="gloss-fr" style={{ fontSize: 13, marginTop: 8 }}>{selectedGlossaryTerm.frPrimary}</div>
+                    {selectedGlossaryTerm.fr.length > 1 && (
+                      <div className="tiny muted" style={{ marginTop: 6 }}>
+                        Variantes: {selectedGlossaryTerm.fr.slice(1).join(", ")}
+                      </div>
+                    )}
+                    {selectedGlossaryTerm.note && (
+                      <div className="tiny" style={{ marginTop: 10, lineHeight: 1.5 }}>
+                        {selectedGlossaryTerm.note}
+                      </div>
+                    )}
+                    {selectedGlossaryTerm.refs && Object.keys(selectedGlossaryTerm.refs).length > 0 && (
+                      <div className="tiny muted" style={{ marginTop: 10 }}>
+                        References: {Object.entries(selectedGlossaryTerm.refs)
+                          .map(([key, value]) => `${key}: ${value}`)
+                          .join(" • ")}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="tiny muted">Cliquez un terme surligne dans le texte source pour afficher sa fiche.</div>
+                )}
               </div>
             </div>
           </div>
@@ -279,6 +331,7 @@ function SegmentRow(props: {
   showGloss: boolean;
   isFocused: boolean;
   glossary: ReadonlyArray<GlossaryEntry>;
+  onTermClick: (term: GlossaryEntry) => void;
   editingCell: { segmentId: string; field: "gloss" | "fr" } | null;
   editValue: string;
   onStartEdit: (segment: ReaderSegment, field: "gloss" | "fr") => void;
@@ -293,6 +346,7 @@ function SegmentRow(props: {
     showGloss,
     isFocused,
     glossary,
+    onTermClick,
     editingCell,
     editValue,
     onStartEdit,
@@ -313,7 +367,7 @@ function SegmentRow(props: {
       </div>
 
       <div className="cell cell-A">
-        {renderSourceWithTerms(segment.src, glossary)}
+        {renderSourceWithTerms(segment.src, glossary, onTermClick)}
       </div>
 
       {showGloss && (
