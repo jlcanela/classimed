@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useAtomSet, useAtomValue } from "@effect/atom-react";
+import { glossaryAtom, type GlossaryEntry } from "./glossary/-atoms";
 import {
   readerActiveDocumentAtom,
   readerEditValueAtom,
@@ -19,6 +20,57 @@ export const Route = createFileRoute("/_classimed/reader")({
   component: RouteComponent,
 });
 
+function renderSourceWithTerms(text: string, glossary: ReadonlyArray<GlossaryEntry>) {
+  if (!text || glossary.length === 0) {
+    return text;
+  }
+
+  const sorted = [...glossary].sort((a, b) => b.char.length - a.char.length);
+  const out: Array<string | JSX.Element> = [];
+  let i = 0;
+
+  while (i < text.length) {
+    let matched: GlossaryEntry | null = null;
+
+    for (const term of sorted) {
+      if (text.substr(i, term.char.length) === term.char) {
+        matched = term;
+        break;
+      }
+    }
+
+    if (matched) {
+      out.push(
+        <span key={`term-${i}`} className="term">
+          {matched.char}
+        </span>,
+      );
+      i += matched.char.length;
+      continue;
+    }
+
+    let j = i;
+    while (j < text.length) {
+      let isTerm = false;
+      for (const term of sorted) {
+        if (text.substr(j, term.char.length) === term.char) {
+          isTerm = true;
+          break;
+        }
+      }
+      if (isTerm) {
+        break;
+      }
+      j++;
+    }
+
+    out.push(text.slice(i, j));
+    i = j;
+  }
+
+  return out;
+}
+
 function RouteComponent() {
   const workspace = useAtomValue(readerWorkspaceAtom);
   const activeDocument = useAtomValue(readerActiveDocumentAtom);
@@ -28,6 +80,7 @@ function RouteComponent() {
   const editingCell = useAtomValue(readerEditingCellAtom);
   const editValue = useAtomValue(readerEditValueAtom);
   const loadError = useAtomValue(readerLoadErrorAtom);
+  const glossary = useAtomValue(glossaryAtom);
 
   const setSelectedDocumentId = useAtomSet(readerSelectedDocumentIdAtom);
   const setFocusedSegmentId = useAtomSet(readerFocusedSegmentIdAtom);
@@ -177,6 +230,7 @@ function RouteComponent() {
                         index={index}
                         showGloss={showGloss}
                         isFocused={isFocused}
+                        glossary={glossary}
                         editingCell={editingCell}
                         editValue={editValue}
                         onStartEdit={handleStartEdit}
@@ -224,6 +278,7 @@ function SegmentRow(props: {
   index: number;
   showGloss: boolean;
   isFocused: boolean;
+  glossary: ReadonlyArray<GlossaryEntry>;
   editingCell: { segmentId: string; field: "gloss" | "fr" } | null;
   editValue: string;
   onStartEdit: (segment: ReaderSegment, field: "gloss" | "fr") => void;
@@ -237,6 +292,7 @@ function SegmentRow(props: {
     index,
     showGloss,
     isFocused,
+    glossary,
     editingCell,
     editValue,
     onStartEdit,
@@ -257,7 +313,7 @@ function SegmentRow(props: {
       </div>
 
       <div className="cell cell-A">
-        {segment.src}
+        {renderSourceWithTerms(segment.src, glossary)}
       </div>
 
       {showGloss && (
