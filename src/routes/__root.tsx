@@ -9,7 +9,11 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 function RootLayout() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const activeTab = pathname.startsWith("/design") ? "design" : "todo";
+  const activeTab = pathname.startsWith("/design")
+    ? "design"
+    : pathname.startsWith("/ctext")
+    ? "ctext"
+    : "todo";
 
   return (
     <Tabs
@@ -18,6 +22,8 @@ function RootLayout() {
       onChange={(value) => {
         if (value === "design") {
           void navigate({ to: "/design" });
+        } else  if (value === "ctext") {
+          void navigate({ to: "/ctext" });
         } else {
           void navigate({ to: "/reader" });
         }
@@ -26,6 +32,7 @@ function RootLayout() {
       <Tabs.List>
         <Tabs.Tab value="todo">Application (WIP)</Tabs.Tab>
         <Tabs.Tab value="design">Design</Tabs.Tab>
+        <Tabs.Tab value="ctext">ctext.org</Tabs.Tab>
       </Tabs.List>
 
       <Box pt="md">
