@@ -1,4 +1,6 @@
 import { assign, createMachine, fromPromise } from "xstate";
+import { Effect } from "effect";
+import { runtime } from "@/app/boot";
 import {
   callFinalizeImport,
   callRunOcrMock,
@@ -190,9 +192,7 @@ export const importMachine = createMachine(
           onError: {
             target: "source",
             actions: [
-              ({ event }) => {
-                console.error("[import] OCR step failed", event.error);
-              },
+              ({ event }) => { runtime.runFork(Effect.logError("[import] OCR step failed", event.error)); },
               assign({ submitError: ({ event }) => String(event.error) }),
             ],
           },
@@ -215,9 +215,7 @@ export const importMachine = createMachine(
           onError: {
             target: "review",
             actions: [
-              ({ event }) => {
-                console.error("[import] segmentation step failed", event.error);
-              },
+              ({ event }) => { runtime.runFork(Effect.logError("[import] segmentation step failed", event.error)); },
               assign({ submitError: ({ event }) => String(event.error) }),
             ],
           },
@@ -252,9 +250,7 @@ export const importMachine = createMachine(
           onError: {
             target: "detect",
             actions: [
-              ({ event }) => {
-                console.error("[import] finalize step failed", event.error);
-              },
+              ({ event }) => { runtime.runFork(Effect.logError("[import] finalize step failed", event.error)); },
               assign({ submitError: ({ event }) => String(event.error) }),
             ],
           },

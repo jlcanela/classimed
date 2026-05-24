@@ -1,6 +1,6 @@
 import { Context, Effect, Exit, Layer } from "effect";
 import type { DBType } from "./DB";
-import { DatabaseError, makeEffectDbClientFromDb } from "./DB";
+import { DatabaseError, makeEffectDbClient } from "./DB";
 
 const migrationSqlFiles = import.meta.glob([
     "/src/drizzle/**/migration.sql",
@@ -33,7 +33,7 @@ export class Migration extends Context.Service<Migration, {
         Effect.gen(function* () {
             const migrate = (drizzleClient: DBType) =>
                 Effect.gen(function* () {
-                    const client = makeEffectDbClientFromDb(drizzleClient);
+                    const client = makeEffectDbClient(drizzleClient.$client);
 
                     yield* client.exec(`
                         CREATE TABLE IF NOT EXISTS __drizzle_migrations_browser (

@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import { TaskRepository } from "../repo/task-repo";
 import type { Task } from "../db/schema";
 import type { PersistenceError } from "../domain/errors";
-import { Database, makeEffectDbClientFromDb } from "@/db/DB";
+import { Database, makeEffectDbClient } from "@/db/DB";
 
 export const listTasks: Effect.Effect<ReadonlyArray<Task>, PersistenceError, TaskRepository> =
   TaskRepository.pipe(Effect.flatMap((repo) => repo.list()));
@@ -25,6 +25,6 @@ export const deleteTask = (
 
 export const dbAccess = Effect.gen(function* () {
   const db = yield* Database;
-  const client = makeEffectDbClientFromDb(db);
+  const client = makeEffectDbClient(db.$client);
   return yield* client.exec(`SELECT 1`);
 });

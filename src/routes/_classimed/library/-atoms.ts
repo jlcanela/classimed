@@ -4,11 +4,8 @@ import { atomRuntime } from "@/app/boot";
 import type { LibraryDocument } from "@/usecase/documents";
 import { listDocuments } from "@/usecase/documents";
 
-export const libraryAsyncAtom = atomRuntime.atom(
-  Effect.gen(function* () {
-    return yield* listDocuments;
-  }),
-).pipe(Atom.withReactivity(["documents"]));
+export const libraryAsyncAtom = atomRuntime.atom(listDocuments)
+  .pipe(Atom.withReactivity(["documents"]));
 
 export const libraryDocumentsAtom = Atom.readable((get): ReadonlyArray<LibraryDocument> => {
   const result = get(libraryAsyncAtom);

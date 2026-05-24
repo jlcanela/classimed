@@ -73,8 +73,6 @@ export const makeEffectDbClient = (client: PGlite): EffectDbClient => ({
         }),
 });
 
-export const makeEffectDbClientFromDb = (db: DBType): EffectDbClient => makeEffectDbClient(db.$client);
-
 export const makeEffectDrizzle = (db: DBType): EffectDrizzle => ({
     run: (build) => liftDbPromise(() => build(db)),
 });

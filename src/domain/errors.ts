@@ -1,10 +1,10 @@
-import { Data } from "effect";
+import { Schema } from "effect";
 
-export class BootError extends Data.TaggedError("BootError")<{
-  readonly message: string;
-  readonly cause?: unknown;
-}> {}
+export class BootError extends Schema.TaggedErrorClass<BootError>()("BootError", {
+  message: Schema.String,
+  cause: Schema.optional(Schema.Defect),
+}) {}
 
-export class PersistenceError extends Data.TaggedError("PersistenceError")<{
-  readonly cause?: unknown;
-}> {}
+export class PersistenceError extends Schema.TaggedErrorClass<PersistenceError>()("PersistenceError", {
+  cause: Schema.optional(Schema.Defect),
+}) {}

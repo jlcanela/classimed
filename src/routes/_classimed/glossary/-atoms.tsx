@@ -45,10 +45,7 @@ const toGlossaryEntry = (term: GlossaryTerm): GlossaryEntry => ({
 });
 
 export const glossaryAsyncAtom = atomRuntime.atom(
-	Effect.gen(function* () {
-		const terms = yield* listGlossaryTerms;
-		return terms.map(toGlossaryEntry);
-	}),
+	listGlossaryTerms.pipe(Effect.map((terms) => terms.map(toGlossaryEntry))),
 ).pipe(Atom.withReactivity(['glossary-terms']));
 
 const toNewGlossaryTerm = (term: EditableGlossaryTerm) => ({

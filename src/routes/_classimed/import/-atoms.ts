@@ -1,20 +1,20 @@
 import { Effect } from "effect";
 import { runtime } from "@/app/boot";
-import { createImportedDocumentAndSegments } from "@/usecase/import-documents";
+import {
+  createImportedDocumentAndSegments,
+  type CreateImportedDocumentInput,
+  type ImportMode,
+  type SegmentLanguage,
+  type SegmentationLine,
+} from "@/usecase/import-documents";
 
-export type ImportMode = "paste" | "pdf" | "scan";
-export type SegmentLanguage = "classical" | "modern";
+export type { ImportMode, SegmentLanguage, SegmentationLine };
+export type FinalizeImportInput = CreateImportedDocumentInput;
 
 export type OcrLine = {
   txt: string;
   conf: number;
   alt?: string;
-};
-
-export type SegmentationLine = {
-  txt: string;
-  lang: SegmentLanguage;
-  conf: number;
 };
 
 export type OcrResult = {
@@ -32,20 +32,6 @@ export type FinalizeImportResult = {
   documentId: string;
   message: string;
   title: string;
-};
-
-export type FinalizeImportInput = {
-  mode: ImportMode;
-  sourceLabel: string;
-  sourcePreview: string;
-  documentTitle: string;
-  documentTitleFr: string;
-  documentPeriod: string;
-  documentType: string;
-  documentTagsText: string;
-  documentPages: number;
-  documentActive: boolean;
-  segmentationLines: ReadonlyArray<SegmentationLine>;
 };
 
 const defaultOcrLines: OcrLine[] = [

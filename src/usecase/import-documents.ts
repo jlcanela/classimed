@@ -4,11 +4,12 @@ import type { PersistenceError } from "../domain/errors";
 import { DocumentRepository } from "../repo/document-repo";
 import { SegmentRepository } from "../repo/segment-repo";
 
-type ImportMode = "paste" | "pdf" | "scan";
+export type ImportMode = "paste" | "pdf" | "scan";
+export type SegmentLanguage = "classical" | "modern";
 
-type SegmentationLine = {
+export type SegmentationLine = {
   txt: string;
-  lang: "classical" | "modern";
+  lang: SegmentLanguage;
   conf: number;
 };
 

@@ -81,7 +81,3 @@ export class GlossaryTermRepository extends Context.Service<GlossaryTermReposito
     });
   }
 }
-
-export function makeGlossaryTermRepositoryLayer(db: AppDb): Layer.Layer<GlossaryTermRepository> {
-  return GlossaryTermRepository.layer(db);
-}

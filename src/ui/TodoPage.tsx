@@ -1,67 +1,28 @@
-import { useState, useEffect, useCallback } from "react";
+import { useAtomValue, useAtomSet } from "@effect/atom-react";
 import { Container, Title, Stack, Text, Loader, Alert } from "@mantine/core";
-import type { AppRuntime } from "../app/boot";
-import type { Task } from "../db/schema";
-import { listTasks, createTask, setTaskCompleted, deleteTask, dbAccess } from "../usecase/tasks";
+import {
+  tasksAtom,
+  tasksLoadingAtom,
+  tasksLoadErrorAtom,
+  createTaskAtom,
+  toggleTaskAtom,
+  deleteTaskAtom,
+} from "../routes/_classimed/todo/-atoms";
 import { AddTaskForm } from "./components/AddTaskForm";
 import { TaskItem } from "./components/TaskItem";
 
-interface Props {
-  runtime: AppRuntime;
-}
+export function TodoPage() {
+  const tasks = useAtomValue(tasksAtom);
+  const loading = useAtomValue(tasksLoadingAtom);
+  const error = useAtomValue(tasksLoadErrorAtom);
 
-export function TodoPage({ runtime }: Props) {
-  const [tasks, setTasks] = useState<ReadonlyArray<Task>>([]);
-  const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const addTask = useAtomSet(createTaskAtom, { mode: "promise" });
+  const toggleTask = useAtomSet(toggleTaskAtom, { mode: "promise" });
+  const removeTask = useAtomSet(deleteTaskAtom, { mode: "promise" });
 
-  const load = useCallback(() => {
-    runtime
-      .runPromise(listTasks)
-      .then(setTasks)
-      .catch((e: unknown) => setError(String(e)))
-      .finally(() => setLoading(false));
-  }, [runtime]);
-
-  const dbTest = useCallback(() => {
-    runtime
-      .runPromise(dbAccess)
-      .then((r) => console.log(r))
-      .catch((e: unknown) => setError(String(e)))
-      //.finally(() => setLoading(false));
-  }, [runtime]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  useEffect(() => {
-    dbTest();
-  }, [dbTest]);
-
-  const handleAdd = (title: string) => {
-    setCreating(true);
-    runtime
-      .runPromise(createTask(title))
-      .then(() => load())
-      .catch((e: unknown) => setError(String(e)))
-      .finally(() => setCreating(false));
-  };
-
-  const handleToggle = (id: string, completed: boolean) => {
-    runtime
-      .runPromise(setTaskCompleted(id, completed))
-      .then(() => load())
-      .catch((e: unknown) => setError(String(e)));
-  };
-
-  const handleDelete = (id: string) => {
-    runtime
-      .runPromise(deleteTask(id))
-      .then(() => load())
-      .catch((e: unknown) => setError(String(e)));
-  };
+  const handleAdd = (title: string) => { addTask(title); };
+  const handleToggle = (id: string, completed: boolean) => { toggleTask({ id, completed }); };
+  const handleDelete = (id: string) => { removeTask(id); };
 
   return (
     <Container size="sm" py="xl">
@@ -70,12 +31,12 @@ export function TodoPage({ runtime }: Props) {
       </Title>
 
       {error && (
-        <Alert color="red" mb="md" withCloseButton onClose={() => setError(null)}>
+        <Alert color="red" mb="md">
           {error}
         </Alert>
       )}
 
-      <AddTaskForm onAdd={handleAdd} loading={creating} />
+      <AddTaskForm onAdd={handleAdd} loading={false} />
 
       <Stack mt="xl" gap="sm">
         {loading ? (
