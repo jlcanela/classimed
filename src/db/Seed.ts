@@ -8,12 +8,21 @@ interface GlossarySeedEntry {
   id: string;
   char: string;
   pinyin: string;
-  category: string;
+  category: GlossarySeedCategory;
   fr: string[];
   frPrimary: string;
   refs?: Record<string, string>;
   note: string;
 }
+
+type GlossarySeedCategory =
+  | "concept"
+  | "meridian"
+  | "point"
+  | "pathology"
+  | "technique"
+  | "herb"
+  | "proper";
 
 const glossarySeedData: ReadonlyArray<GlossarySeedEntry> = [
   // --- Principes fondamentaux / cosmologie ---
@@ -731,7 +740,7 @@ const glossarySeedData: ReadonlyArray<GlossarySeedEntry> = [
     id: 'suwen',
     char: '素問',
     pinyin: 'Sù Wèn',
-    category: 'text',
+    category: 'proper',
     fr: ['Su Wen', 'Questions simples'],
     frPrimary: 'Su Wen',
     note:
@@ -741,7 +750,7 @@ const glossarySeedData: ReadonlyArray<GlossarySeedEntry> = [
     id: 'lingshu',
     char: '靈樞',
     pinyin: 'Líng Shū',
-    category: 'text',
+    category: 'proper',
     fr: ['Ling Shu', 'Axe spirituel'],
     frPrimary: 'Ling Shu',
     note:
@@ -751,7 +760,7 @@ const glossarySeedData: ReadonlyArray<GlossarySeedEntry> = [
     id: 'nanjing',
     char: '難經',
     pinyin: 'Nán Jīng',
-    category: 'text',
+    category: 'proper',
     fr: ['Nan Jing', 'Classique des difficultés'],
     frPrimary: 'Nan Jing',
     note:
@@ -761,7 +770,7 @@ const glossarySeedData: ReadonlyArray<GlossarySeedEntry> = [
     id: 'shanghanlun',
     char: '傷寒論',
     pinyin: 'Shāng Hán Lùn',
-    category: 'text',
+    category: 'proper',
     fr: ['Shang Han Lun', 'Traité des lésions du froid'],
     frPrimary: 'Shang Han Lun',
     note:
