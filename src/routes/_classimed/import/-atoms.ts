@@ -1,5 +1,6 @@
 import { Effect, ManagedRuntime } from "effect";
 import { appLayer } from "@/app/boot";
+import { createImportedDocumentAndSegments } from "@/usecase/import-documents";
 
 export type ImportMode = "paste" | "pdf" | "scan";
 export type SegmentLanguage = "classical" | "modern";
@@ -30,6 +31,21 @@ export type SegmentationResult = {
 export type FinalizeImportResult = {
   documentId: string;
   message: string;
+  title: string;
+};
+
+export type FinalizeImportInput = {
+  mode: ImportMode;
+  sourceLabel: string;
+  sourcePreview: string;
+  documentTitle: string;
+  documentTitleFr: string;
+  documentPeriod: string;
+  documentType: string;
+  documentTagsText: string;
+  documentPages: number;
+  documentActive: boolean;
+  segmentationLines: ReadonlyArray<SegmentationLine>;
 };
 
 const importRuntime = ManagedRuntime.make(appLayer);
@@ -83,11 +99,24 @@ const runSegmentationMock = Effect.fn(function* (input: { lines: OcrLine[] }) {
   } satisfies SegmentationResult;
 });
 
-const finalizeImportMock = Effect.fn(function* () {
-  return {
-    documentId: crypto.randomUUID(),
+const finalizeImport = Effect.fn(function* (input: FinalizeImportInput) {
+  console.info("[import] finalize start", {
+    mode: input.mode,
+    sourceLabel: input.sourceLabel,
+    documentTitle: input.documentTitle,
+    segmentationCount: input.segmentationLines.length,
+  });
+
+  const created = yield* createImportedDocumentAndSegments(input);
+
+  const result = {
+    documentId: created.documentId,
+    title: created.title,
     message: "Document importe et pret pour traduction.",
   } satisfies FinalizeImportResult;
+
+  console.info("[import] finalize success", result);
+  return result;
 });
 
 export const callRunOcrMock = (input: { mode: ImportMode; pastedText: string }) =>
@@ -96,5 +125,13 @@ export const callRunOcrMock = (input: { mode: ImportMode; pastedText: string }) 
 export const callRunSegmentationMock = (input: { lines: OcrLine[] }) =>
   importRuntime.runPromise(runSegmentationMock(input));
 
-export const callFinalizeImportMock = () =>
-  importRuntime.runPromise(finalizeImportMock());
+export const callFinalizeImport = (input: FinalizeImportInput) =>
+  importRuntime.runPromise(finalizeImport(input)).catch((error) => {
+    console.error("[import] finalize failed", {
+      error,
+      sourceLabel: input.sourceLabel,
+      mode: input.mode,
+      segmentationCount: input.segmentationLines.length,
+    });
+    throw error;
+  });

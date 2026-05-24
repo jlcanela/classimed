@@ -5,20 +5,32 @@ import type { EmptyRelations } from "drizzle-orm/relations";
 
 export type DBType = PgliteDatabase<EmptyRelations> & { $client: PGlite; };
 
+type GlobalDbState = typeof globalThis & {
+    __classimedDbClient__?: PGlite;
+    __classimedDb__?: DBType;
+};
+
+const globalDbState = globalThis as GlobalDbState;
+
+const getOrCreateSharedDb = (): DBType => {
+    if (globalDbState.__classimedDb__) {
+        return globalDbState.__classimedDb__;
+    }
+
+    const client = new PGlite("idb://classimed-db");
+    const db: DBType = drizzle({ client });
+    globalDbState.__classimedDbClient__ = client;
+    globalDbState.__classimedDb__ = db;
+    return db;
+};
+
 export class Database extends Context.Service<Database, DBType>()(
     "myapp/db/Database"
 ) {
-    static readonly layer = Layer.effect(
+    static readonly layer = Layer.sync(
         Database,
-        Effect.acquireRelease(
-            Effect.sync(() => {
-                const client = new PGlite("idb://classimed-db");
-                                const db: DBType = drizzle({ client });
-                return db;
-            }),
-                        (dbClient) => Effect.promise(() => dbClient.$client.close()).pipe(Effect.orDie),
-        )
-        );
+        () => getOrCreateSharedDb(),
+    );
 }
 
 export const DatabaseLive = Database.layer;

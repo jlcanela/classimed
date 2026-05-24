@@ -1,11 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useAtomSet } from "@effect/atom-react";
 import { createActor } from "xstate";
 import { CompletedStep } from "./import/-CompletedStep";
 import { DetectStep } from "./import/-DetectStep";
 import { importMachine, STATE_TO_STEP, type ImportEvent, type ImportState } from "./import/-machine.js";
 import { ReviewStep } from "./import/-ReviewStep";
 import { SourceStep } from "./import/-SourceStep";
+import { refreshLibraryDocumentsAtom } from "./library/-atoms";
 
 export const Route = createFileRoute("/_classimed/import")({
   component: ImportRoute,
@@ -38,9 +40,25 @@ function useImportActor() {
 
 function ImportRoute() {
   const { snapshot, send } = useImportActor();
+  const refreshLibraryDocuments = useAtomSet(refreshLibraryDocumentsAtom, { mode: "promise" });
   const state = snapshot.value as ImportState;
   const context = snapshot.context;
   const activeStep = STATE_TO_STEP[state];
+  const lastPublishedDocumentIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (state !== "completed") {
+      return;
+    }
+
+    const documentId = context.finalizeResult?.documentId;
+    if (!documentId || lastPublishedDocumentIdRef.current === documentId) {
+      return;
+    }
+
+    lastPublishedDocumentIdRef.current = documentId;
+    void refreshLibraryDocuments();
+  }, [context.finalizeResult?.documentId, refreshLibraryDocuments, state]);
 
   return (
     <div className="page">
@@ -75,30 +93,38 @@ function ImportRoute() {
           <SourceStep
             mode={context.mode}
             pastedText={context.pastedText}
+            documentTitle={context.documentTitle}
+            documentTitleFr={context.documentTitleFr}
+            documentPeriod={context.documentPeriod}
+            documentType={context.documentType}
+            documentTagsText={context.documentTagsText}
+            documentPages={context.documentPages}
+            documentActive={context.documentActive}
             error={context.submitError}
             isLoading={state === "reviewLoading"}
             onModeChange={(mode) => send({ type: "SET_MODE", mode })}
             onPastedTextChange={(pastedText) => send({ type: "SET_PASTED_TEXT", pastedText })}
+            onMetadataChange={(patch) => send({ type: "SET_DOCUMENT_METADATA", patch })}
             onContinue={() => send({ type: "CONTINUE_SOURCE" })}
           />
         )}
 
-        {(state === "review" || state === "detectLoading") && (
+        {(state === "reviewLoading" || state === "review") && (
           <ReviewStep
             sourceLabel={context.sourceLabel}
             sourcePreview={context.sourcePreview}
             confidence={context.ocrConfidence}
             lines={context.ocrLines}
-            isLoading={state === "detectLoading"}
+            isLoading={state === "reviewLoading"}
             onBack={() => send({ type: "BACK" })}
             onConfirm={() => send({ type: "CONFIRM_OCR" })}
           />
         )}
 
-        {(state === "detect" || state === "submitting") && (
+        {(state === "detectLoading" || state === "detect" || state === "submitting") && (
           <DetectStep
             lines={context.segmentationLines}
-            isLoading={false}
+            isLoading={state === "detectLoading"}
             isSubmitting={state === "submitting"}
             error={context.submitError}
             onBack={() => send({ type: "BACK" })}

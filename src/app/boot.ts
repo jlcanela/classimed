@@ -2,11 +2,16 @@ import { Effect, Layer, ManagedRuntime } from "effect";
 import { Atom } from "effect/unstable/reactivity";
 import { makeTaskRepositoryLayer, TaskRepository } from "../repo/task-repo";
 import { GlossaryTermRepository } from "../repo/glossary-term-repo";
+import { DocumentRepository } from "../repo/document-repo";
+import { SegmentRepository } from "../repo/segment-repo";
 import { Database, DatabaseLive } from "@/db/DB";
 import { Migration } from "@/db/Migration";
 import { Seed } from "@/db/Seed";
 
-export type AppRuntime = ManagedRuntime.ManagedRuntime<TaskRepository | GlossaryTermRepository | Database, never>;
+export type AppRuntime = ManagedRuntime.ManagedRuntime<
+  TaskRepository | GlossaryTermRepository | DocumentRepository | SegmentRepository | Database,
+  never
+>;
 
 const repositoryLayer = Layer.unwrap(
   Effect.gen(function* () {
@@ -18,8 +23,11 @@ const repositoryLayer = Layer.unwrap(
     yield* seedGlossaryTerms(db).pipe(Effect.tapCause(Effect.logError), Effect.orDie);
 
     return Layer.merge(
-      makeTaskRepositoryLayer(db),
       GlossaryTermRepository.layer(db),
+      Layer.merge(
+        makeTaskRepositoryLayer(db),
+        Layer.merge(DocumentRepository.layer(db), SegmentRepository.layer(db)),
+      ),
     );
   }),
 ).pipe(Layer.provide(DatabaseLive), Layer.provide(Migration.layer), Layer.provide(Seed.layer));

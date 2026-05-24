@@ -1,19 +1,37 @@
 import { assign, createMachine, fromPromise } from "xstate";
 import {
-  callFinalizeImportMock,
+  callFinalizeImport,
   callRunOcrMock,
   callRunSegmentationMock,
+  type FinalizeImportInput,
   type FinalizeImportResult,
   type ImportMode,
   type OcrLine,
   type SegmentationLine,
 } from "./-atoms";
 
+type DocumentMetadata = {
+  documentTitle: string;
+  documentTitleFr: string;
+  documentPeriod: string;
+  documentType: string;
+  documentTagsText: string;
+  documentPages: number;
+  documentActive: boolean;
+};
+
 export type ImportContext = {
   mode: ImportMode;
   pastedText: string;
   sourceLabel: string;
   sourcePreview: string;
+  documentTitle: string;
+  documentTitleFr: string;
+  documentPeriod: string;
+  documentType: string;
+  documentTagsText: string;
+  documentPages: number;
+  documentActive: boolean;
   ocrConfidence: number;
   ocrLines: OcrLine[];
   segmentationLines: SegmentationLine[];
@@ -24,6 +42,7 @@ export type ImportContext = {
 export type ImportEvent =
   | { type: "SET_MODE"; mode: ImportMode }
   | { type: "SET_PASTED_TEXT"; pastedText: string }
+  | { type: "SET_DOCUMENT_METADATA"; patch: Partial<DocumentMetadata> }
   | { type: "CONTINUE_SOURCE" }
   | { type: "CONFIRM_OCR" }
   | { type: "SUBMIT_IMPORT" }
@@ -56,6 +75,32 @@ const toPastedOcrLines = (pastedText: string): OcrLine[] =>
     .filter((line) => line.length > 0)
     .map((txt, index) => ({ txt, conf: Math.max(0.8, 0.99 - index * 0.02) }));
 
+const toDocumentTitle = (sourceLabel: string, sourcePreview: string) => {
+  const withoutExtension = sourceLabel.replace(/\.[a-z0-9]+$/i, "").trim();
+  if (withoutExtension.length > 0) {
+    return withoutExtension;
+  }
+
+  const firstPreviewLine = sourcePreview
+    .split("　")
+    .map((line) => line.trim())
+    .find((line) => line.length > 0);
+
+  return firstPreviewLine?.slice(0, 60) ?? "Document importe";
+};
+
+const toDocumentMetadata = (context: ImportContext): DocumentMetadata => ({
+  documentTitle: context.documentTitle.trim().length > 0
+    ? context.documentTitle.trim()
+    : toDocumentTitle(context.sourceLabel, context.sourcePreview),
+  documentTitleFr: context.documentTitleFr.trim(),
+  documentPeriod: context.documentPeriod.trim(),
+  documentType: context.documentType.trim().length > 0 ? context.documentType.trim() : "canon",
+  documentTagsText: context.documentTagsText.trim(),
+  documentPages: Number.isFinite(context.documentPages) ? Math.max(0, Math.trunc(context.documentPages)) : 0,
+  documentActive: context.documentActive,
+});
+
 export const importMachine = createMachine(
   {
     types: {} as {
@@ -69,6 +114,13 @@ export const importMachine = createMachine(
       pastedText: "",
       sourceLabel: "",
       sourcePreview: "",
+      documentTitle: "",
+      documentTitleFr: "",
+      documentPeriod: "",
+      documentType: "canon",
+      documentTagsText: "",
+      documentPages: 0,
+      documentActive: true,
       ocrConfidence: 0,
       ocrLines: [],
       segmentationLines: [],
@@ -84,6 +136,9 @@ export const importMachine = createMachine(
           SET_PASTED_TEXT: {
             actions: assign({ pastedText: ({ event }) => event.pastedText }),
           },
+          SET_DOCUMENT_METADATA: {
+            actions: assign(({ event }) => event.patch),
+          },
           CONTINUE_SOURCE: [
             {
               guard: ({ context }) => context.mode === "paste",
@@ -98,6 +153,9 @@ export const importMachine = createMachine(
                   submitError: null,
                   sourceLabel: "source-collee.txt",
                   sourcePreview: lines.map((line) => line.txt).join("　"),
+                  documentTitle: context.documentTitle.trim().length > 0
+                    ? context.documentTitle
+                    : lines[0]?.txt?.slice(0, 60) ?? "Document importe",
                   ocrConfidence: confidence,
                   ocrLines: lines,
                 };
@@ -122,13 +180,21 @@ export const importMachine = createMachine(
             actions: assign({
               sourceLabel: ({ event }) => event.output.sourceLabel,
               sourcePreview: ({ event }) => event.output.sourcePreview,
+              documentTitle: ({ context, event }) => context.documentTitle.trim().length > 0
+                ? context.documentTitle
+                : toDocumentTitle(event.output.sourceLabel, event.output.sourcePreview),
               ocrConfidence: ({ event }) => event.output.confidence,
               ocrLines: ({ event }) => event.output.lines,
             }),
           },
           onError: {
             target: "source",
-            actions: assign({ submitError: ({ event }) => String(event.error) }),
+            actions: [
+              ({ event }) => {
+                console.error("[import] OCR step failed", event.error);
+              },
+              assign({ submitError: ({ event }) => String(event.error) }),
+            ],
           },
         },
       },
@@ -148,7 +214,12 @@ export const importMachine = createMachine(
           },
           onError: {
             target: "review",
-            actions: assign({ submitError: ({ event }) => String(event.error) }),
+            actions: [
+              ({ event }) => {
+                console.error("[import] segmentation step failed", event.error);
+              },
+              assign({ submitError: ({ event }) => String(event.error) }),
+            ],
           },
         },
       },
@@ -167,13 +238,25 @@ export const importMachine = createMachine(
       submitting: {
         invoke: {
           src: "finalizeImport",
+          input: ({ context }: { context: ImportContext }): FinalizeImportInput => ({
+            mode: context.mode,
+            sourceLabel: context.sourceLabel,
+            sourcePreview: context.sourcePreview,
+            ...toDocumentMetadata(context),
+            segmentationLines: context.segmentationLines,
+          }),
           onDone: {
             target: "completed",
             actions: assign({ finalizeResult: ({ event }) => event.output }),
           },
           onError: {
             target: "detect",
-            actions: assign({ submitError: ({ event }) => String(event.error) }),
+            actions: [
+              ({ event }) => {
+                console.error("[import] finalize step failed", event.error);
+              },
+              assign({ submitError: ({ event }) => String(event.error) }),
+            ],
           },
         },
       },
@@ -186,6 +269,13 @@ export const importMachine = createMachine(
               pastedText: () => "",
               sourceLabel: () => "",
               sourcePreview: () => "",
+              documentTitle: () => "",
+              documentTitleFr: () => "",
+              documentPeriod: () => "",
+              documentType: () => "canon",
+              documentTagsText: () => "",
+              documentPages: () => 0,
+              documentActive: () => true,
               ocrConfidence: () => 0,
               ocrLines: () => [],
               segmentationLines: () => [],
@@ -205,7 +295,7 @@ export const importMachine = createMachine(
       runSegmentation: fromPromise(({ input }: { input: { lines: OcrLine[] } }) =>
         callRunSegmentationMock(input),
       ),
-      finalizeImport: fromPromise(() => callFinalizeImportMock()),
+      finalizeImport: fromPromise(({ input }: { input: FinalizeImportInput }) => callFinalizeImport(input)),
     },
   },
 );
