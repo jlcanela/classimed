@@ -36,25 +36,25 @@ jobs:
         run: pnpm run typecheck
 
       - name: Build application
-        run: pnpm exec vite build --base=/classimed/
+        run: pnpm run build --base="/classimed/"
 
       - name: Verify GitHub Pages asset paths
         run: |
-          grep -q 'src="/classimed/assets/' dist/index.html
-          grep -q 'href="/classimed/assets/' dist/index.html
+          grep -q 'src="/classimed/assets/' apps/classimed/dist/index.html
+          grep -q 'href="/classimed/assets/' apps/classimed/dist/index.html
 
       - name: Verify iframe static design resources
         run: |
-          test -f 'dist/design/ClassiMedTranslate.html'
-          test -f dist/design/styles.css
-          test -f dist/design/data.js
-          test -f dist/design/app.jsx
+          test -f 'apps/classimed/dist/design/ClassiMedTranslate.html'
+          test -f apps/classimed/dist/design/styles.css
+          test -f apps/classimed/dist/design/data.js
+          test -f apps/classimed/dist/design/app.jsx
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: dist
-          path: dist/
+          path: apps/classimed/dist/
 
   deploy:
     needs: build
@@ -77,7 +77,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'dist/'
+          path: 'apps/classimed/dist/'
 
       - name: Deploy to GitHub Pages
         id: deployment
