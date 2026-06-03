@@ -11,6 +11,8 @@ export type SegmentationLine = {
   txt: string;
   lang: SegmentLanguage;
   conf: number;
+  glossText?: string | null;
+  frText?: string | null;
 };
 
 export type CreateImportedDocumentInput = {
@@ -56,8 +58,8 @@ const toSegments = (documentId: string, lines: ReadonlyArray<SegmentationLine>):
     lang: line.lang,
     confidence: line.conf,
     srcText: line.txt,
-    glossText: null,
-    frText: null,
+    glossText: line.glossText ?? null,
+    frText: line.frText ?? null,
     isAnnotation: false,
     isFlagged: false,
     flagReason: null,

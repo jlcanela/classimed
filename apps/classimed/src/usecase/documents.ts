@@ -60,3 +60,13 @@ export const createDocument = (
   document: NewDocument,
 ): Effect.Effect<Document, PersistenceError, DocumentRepository> =>
   DocumentRepository.pipe(Effect.flatMap((repo) => repo.create(document)));
+
+export const deleteDocument = (
+  documentId: string,
+): Effect.Effect<void, PersistenceError, DocumentRepository | SegmentRepository> =>
+  Effect.gen(function* () {
+    const documentRepo = yield* DocumentRepository;
+    const segmentRepo = yield* SegmentRepository;
+    yield* segmentRepo.deleteByDocumentId(documentId);
+    yield* documentRepo.deleteById(documentId);
+  });

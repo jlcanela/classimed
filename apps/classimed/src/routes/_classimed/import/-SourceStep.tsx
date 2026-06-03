@@ -147,7 +147,7 @@ export function SourceStep(props: SourceStepProps) {
             </div>
           </div>
 
-          <div className="scan-placeholder" style={{ height: 260, fontSize: 13, marginTop: 20 }}>
+{/*           <div className="scan-placeholder" style={{ height: 260, fontSize: 13, marginTop: 20 }}>
             <div style={{ textAlign: "center" }}>
               <div>Deposez un PDF ici ou cliquez pour parcourir</div>
               <div className="muted tiny" style={{ marginTop: 4 }}>
@@ -163,7 +163,7 @@ export function SourceStep(props: SourceStepProps) {
                 OCR optimise pour caracteres chinois traditionnels et simplifies
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 

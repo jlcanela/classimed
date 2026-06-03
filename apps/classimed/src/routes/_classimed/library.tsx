@@ -1,6 +1,8 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { useAtomSet, useAtomValue } from "@effect/atom-react";
 import {
+  deleteDocumentAtom,
   filteredLibraryDocumentsAtom,
   libraryDocumentsAtom,
   libraryLoadErrorAtom,
@@ -16,6 +18,8 @@ function RouteComponent() {
   const filteredDocuments = useAtomValue(filteredLibraryDocumentsAtom);
   const loadError = useAtomValue(libraryLoadErrorAtom);
   const setQuery = useAtomSet(libraryQueryAtom);
+  const deleteDocument = useAtomSet(deleteDocumentAtom, { mode: "promise" });
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   return (
     <div className="page">
@@ -100,6 +104,49 @@ function RouteComponent() {
                   <span>{document.done} termines</span>
                   <span>{document.flagged} signales</span>
                   <span>{document.updated}</span>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                  <Link
+                    to="/reader"
+                    search={{ doc: document.id }}
+                    className="btn btn-filled"
+                    style={{ fontSize: 12 }}
+                  >
+                    Ouvrir
+                  </Link>
+
+                  {confirmingId === document.id ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span className="tiny" style={{ color: "var(--red-8)", fontWeight: 500 }}>
+                        Supprimer ?
+                      </span>
+                      <button
+                        className="btn btn-subtle"
+                        style={{ fontSize: 12 }}
+                        onClick={() => setConfirmingId(null)}
+                      >
+                        Annuler
+                      </button>
+                      <button
+                        className="btn"
+                        style={{ fontSize: 12, background: "var(--red-6)", color: "#fff", border: "none" }}
+                        onClick={() => {
+                          void deleteDocument(document.id).then(() => setConfirmingId(null));
+                        }}
+                      >
+                        Confirmer
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      className="btn btn-subtle"
+                      style={{ fontSize: 12, color: "var(--red-6)" }}
+                      onClick={() => setConfirmingId(document.id)}
+                    >
+                      Supprimer
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

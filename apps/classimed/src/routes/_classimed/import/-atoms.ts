@@ -1,5 +1,7 @@
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
+import { FetchHttpClient, HttpClient, HttpClientRequest, HttpClientResponse } from "effect/unstable/http";
 import { runtime } from "@/app/boot";
+import { readLlmConfig } from "../config/-atoms";
 import {
   createImportedDocumentAndSegments,
   type CreateImportedDocumentInput,
@@ -71,16 +73,60 @@ const runOcrMock = Effect.fn(function* (input: { mode: ImportMode; pastedText: s
   } satisfies OcrResult;
 });
 
-const runSegmentationMock = Effect.fn(function* (input: { lines: OcrLine[] }) {
-  const lines = input.lines.slice(0, 5).map((line, index) => ({
-    txt: index === 3 ? `（编注：${line.txt}）` : `${line.txt}${line.txt.endsWith("。") ? "" : "。"}`,
-    lang: index === 3 ? "modern" : "classical",
-    conf: Math.max(0.83, line.conf - (index === 3 ? 0.04 : 0)),
-  })) as SegmentationLine[];
+const LlmApiResponse = Schema.Struct({
+  choices: Schema.Array(Schema.Struct({
+    message: Schema.Struct({ content: Schema.String }),
+  })),
+});
 
-  return {
-    lines,
-  } satisfies SegmentationResult;
+const LlmContent = Schema.Struct({
+  segments: Schema.Array(Schema.Struct({
+    src_text: Schema.String,
+    gloss_text: Schema.String,
+    fr_text: Schema.String,
+    confidence: Schema.Number,
+  })),
+});
+
+const runSegmentation = Effect.fn(function* (input: { lines: OcrLine[] }) {
+  const config = yield* Effect.sync(() => readLlmConfig());
+  const client = yield* HttpClient.HttpClient;
+  const text = input.lines.map((line) => line.txt).join("\n");
+
+  const apiResponse = yield* HttpClientRequest.post(`${config.apiUrl}/chat/completions`).pipe(
+    HttpClientRequest.bodyJsonUnsafe({
+      model: config.model,
+      temperature: 0.1,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: config.systemPrompt },
+        { role: "user", content: `Process the following text: ${text}` },
+      ],
+    }),
+    client.execute,
+    Effect.flatMap(HttpClientResponse.schemaBodyJson(LlmApiResponse)),
+    Effect.mapError((e) => new Error(`LLM API error: ${String(e)}`)),
+  );
+
+  const content = apiResponse.choices[0]?.message?.content ?? "";
+
+  const parsed = yield* Effect.try({
+    try: () => JSON.parse(content) as unknown,
+    catch: (e) => new Error(`Invalid JSON from LLM: ${String(e)}`),
+  }).pipe(
+    Effect.flatMap(Schema.decodeUnknownEffect(LlmContent)),
+    Effect.mapError((e) => new Error(`Invalid LLM content structure: ${String(e)}`)),
+  );
+
+  const lines: SegmentationLine[] = parsed.segments.map((seg) => ({
+    txt: seg.src_text,
+    lang: "classical" as SegmentLanguage,
+    conf: seg.confidence,
+    glossText: seg.gloss_text,
+    frText: seg.fr_text,
+  }));
+
+  return { lines } satisfies SegmentationResult;
 });
 
 const finalizeImport = Effect.fn(function* (input: FinalizeImportInput) {
@@ -111,8 +157,8 @@ const finalizeImport = Effect.fn(function* (input: FinalizeImportInput) {
 export const callRunOcrMock = (input: { mode: ImportMode; pastedText: string }) =>
   runtime.runPromise(runOcrMock(input));
 
-export const callRunSegmentationMock = (input: { lines: OcrLine[] }) =>
-  runtime.runPromise(runSegmentationMock(input));
+export const callRunSegmentation = (input: { lines: OcrLine[] }) =>
+  runtime.runPromise(runSegmentation(input).pipe(Effect.provide(FetchHttpClient.layer)));
 
 export const callFinalizeImport = (input: FinalizeImportInput) =>
   runtime.runPromise(finalizeImport(input));

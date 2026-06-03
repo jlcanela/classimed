@@ -67,7 +67,7 @@ export const readerLoadErrorAtom = Atom.readable((get): string | null => {
   return AsyncResult.isFailure(result) ? String(result.cause) : null;
 });
 
-export const readerSelectedDocumentIdAtom = Atom.make<string | null>(null);
+export const readerSelectedDocumentIdAtom = Atom.searchParam("doc");
 
 export const readerActiveDocumentIdAtom = Atom.readable((get): string | null => {
   const selectedId = get(readerSelectedDocumentIdAtom);

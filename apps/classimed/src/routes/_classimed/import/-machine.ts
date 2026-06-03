@@ -4,7 +4,7 @@ import { runtime } from "@/app/boot";
 import {
   callFinalizeImport,
   callRunOcrMock,
-  callRunSegmentationMock,
+  callRunSegmentation,
   type FinalizeImportInput,
   type FinalizeImportResult,
   type ImportMode,
@@ -289,7 +289,7 @@ export const importMachine = createMachine(
         callRunOcrMock(input),
       ),
       runSegmentation: fromPromise(({ input }: { input: { lines: OcrLine[] } }) =>
-        callRunSegmentationMock(input),
+        callRunSegmentation(input),
       ),
       finalizeImport: fromPromise(({ input }: { input: FinalizeImportInput }) => callFinalizeImport(input)),
     },

@@ -2,7 +2,7 @@ import { AsyncResult, Atom } from "effect/unstable/reactivity";
 import { Effect } from "effect";
 import { atomRuntime } from "@/app/boot";
 import type { LibraryDocument } from "@/usecase/documents";
-import { listDocuments } from "@/usecase/documents";
+import { deleteDocument, listDocuments } from "@/usecase/documents";
 
 export const libraryAsyncAtom = atomRuntime.atom(listDocuments)
   .pipe(Atom.withReactivity(["documents"]));
@@ -24,6 +24,13 @@ export const refreshLibraryDocumentsAtom = atomRuntime.fn<void>()(
     return;
   }),
   { reactivityKeys: ["documents"] },
+);
+
+export const deleteDocumentAtom = atomRuntime.fn<string>()(
+  Effect.fn(function* (documentId) {
+    yield* deleteDocument(documentId);
+  }),
+  { reactivityKeys: ["documents", "segments"] },
 );
 
 export const filteredLibraryDocumentsAtom = Atom.readable((get) => {

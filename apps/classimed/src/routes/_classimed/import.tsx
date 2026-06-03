@@ -65,7 +65,7 @@ function ImportRoute() {
       <div className="page-head">
         <div>
           <h1>Importer un document</h1>
-          <p>Coller un texte, deposer un PDF ou scanner une page</p>
+          <p>Coller un texte</p>
         </div>
       </div>
 

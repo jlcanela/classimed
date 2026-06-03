@@ -9,6 +9,7 @@ type AppDb = DBType;
 export interface ISegmentRepository {
   readonly listByDocumentId: (documentId: string) => Effect.Effect<ReadonlyArray<Segment>, PersistenceError>;
   readonly createBatch: (items: ReadonlyArray<InsertSegment>) => Effect.Effect<ReadonlyArray<Segment>, PersistenceError>;
+  readonly deleteByDocumentId: (documentId: string) => Effect.Effect<void, PersistenceError>;
   readonly updateTexts: (input: {
     segmentId: string;
     glossText: string | null;
@@ -42,6 +43,14 @@ export class SegmentRepository extends Context.Service<SegmentRepository, ISegme
           : effectDb
               .run((typedDb) => typedDb.insert(segments).values(Array.from(items)).returning())
               .pipe(Effect.mapError((cause) => new PersistenceError({ cause }))),
+
+      deleteByDocumentId: (documentId) =>
+        effectDb
+          .run((typedDb) => typedDb.delete(segments).where(eq(segments.documentId, documentId)))
+          .pipe(
+            Effect.asVoid,
+            Effect.mapError((cause) => new PersistenceError({ cause })),
+          ),
 
       updateTexts: (input) =>
         effectDb

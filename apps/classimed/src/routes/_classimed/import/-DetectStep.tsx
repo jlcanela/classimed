@@ -52,7 +52,7 @@ export function DetectStep(props: DetectStepProps) {
       <div style={{ marginTop: 18, display: "flex", justifyContent: "space-between" }}>
         <button className="btn btn-subtle" onClick={onBack} disabled={isSubmitting}>Revenir a l'OCR</button>
         <button className="btn btn-filled" onClick={onSubmit} disabled={isSubmitting}>
-          {isSubmitting ? "Import en cours..." : "Lancer la traduction"}
+          {isSubmitting ? "Segmentation en cours..." : "Importer"}
         </button>
       </div>
     </div>

@@ -18,6 +18,7 @@ import { Route as ClassimedReaderRouteImport } from './routes/_classimed/reader'
 import { Route as ClassimedLibraryRouteImport } from './routes/_classimed/library'
 import { Route as ClassimedImportRouteImport } from './routes/_classimed/import'
 import { Route as ClassimedGlossaryRouteImport } from './routes/_classimed/glossary'
+import { Route as ClassimedConfigRouteImport } from './routes/_classimed/config'
 
 const DesignRoute = DesignRouteImport.update({
   id: '/design',
@@ -63,11 +64,17 @@ const ClassimedGlossaryRoute = ClassimedGlossaryRouteImport.update({
   path: '/glossary',
   getParentRoute: () => ClassimedRoute,
 } as any)
+const ClassimedConfigRoute = ClassimedConfigRouteImport.update({
+  id: '/config',
+  path: '/config',
+  getParentRoute: () => ClassimedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/ctext': typeof CtextRoute
   '/design': typeof DesignRoute
+  '/config': typeof ClassimedConfigRoute
   '/glossary': typeof ClassimedGlossaryRoute
   '/import': typeof ClassimedImportRoute
   '/library': typeof ClassimedLibraryRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ctext': typeof CtextRoute
   '/design': typeof DesignRoute
+  '/config': typeof ClassimedConfigRoute
   '/glossary': typeof ClassimedGlossaryRoute
   '/import': typeof ClassimedImportRoute
   '/library': typeof ClassimedLibraryRoute
@@ -90,6 +98,7 @@ export interface FileRoutesById {
   '/_classimed': typeof ClassimedRouteWithChildren
   '/ctext': typeof CtextRoute
   '/design': typeof DesignRoute
+  '/_classimed/config': typeof ClassimedConfigRoute
   '/_classimed/glossary': typeof ClassimedGlossaryRoute
   '/_classimed/import': typeof ClassimedImportRoute
   '/_classimed/library': typeof ClassimedLibraryRoute
@@ -102,6 +111,7 @@ export interface FileRouteTypes {
     | '/'
     | '/ctext'
     | '/design'
+    | '/config'
     | '/glossary'
     | '/import'
     | '/library'
@@ -112,6 +122,7 @@ export interface FileRouteTypes {
     | '/'
     | '/ctext'
     | '/design'
+    | '/config'
     | '/glossary'
     | '/import'
     | '/library'
@@ -123,6 +134,7 @@ export interface FileRouteTypes {
     | '/_classimed'
     | '/ctext'
     | '/design'
+    | '/_classimed/config'
     | '/_classimed/glossary'
     | '/_classimed/import'
     | '/_classimed/library'
@@ -202,10 +214,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClassimedGlossaryRouteImport
       parentRoute: typeof ClassimedRoute
     }
+    '/_classimed/config': {
+      id: '/_classimed/config'
+      path: '/config'
+      fullPath: '/config'
+      preLoaderRoute: typeof ClassimedConfigRouteImport
+      parentRoute: typeof ClassimedRoute
+    }
   }
 }
 
 interface ClassimedRouteChildren {
+  ClassimedConfigRoute: typeof ClassimedConfigRoute
   ClassimedGlossaryRoute: typeof ClassimedGlossaryRoute
   ClassimedImportRoute: typeof ClassimedImportRoute
   ClassimedLibraryRoute: typeof ClassimedLibraryRoute
@@ -214,6 +234,7 @@ interface ClassimedRouteChildren {
 }
 
 const ClassimedRouteChildren: ClassimedRouteChildren = {
+  ClassimedConfigRoute: ClassimedConfigRoute,
   ClassimedGlossaryRoute: ClassimedGlossaryRoute,
   ClassimedImportRoute: ClassimedImportRoute,
   ClassimedLibraryRoute: ClassimedLibraryRoute,

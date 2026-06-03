@@ -1,5 +1,5 @@
 import { Context, Effect, Layer } from "effect";
-import { asc } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { type Document, documents, type InsertDocument } from "../db/schema";
 import { DatabaseError, makeEffectDrizzle, type DBType } from "../db/DB";
 import { PersistenceError } from "../domain/errors";
@@ -11,6 +11,7 @@ type NewDocument = InsertDocument & { id: string; title: string };
 export interface IDocumentRepository {
   readonly list: () => Effect.Effect<ReadonlyArray<Document>, PersistenceError>;
   readonly create: (document: NewDocument) => Effect.Effect<Document, PersistenceError>;
+  readonly deleteById: (documentId: string) => Effect.Effect<void, PersistenceError>;
 }
 
 export class DocumentRepository extends Context.Service<DocumentRepository, IDocumentRepository>()("DocumentRepository") {
@@ -32,6 +33,14 @@ export class DocumentRepository extends Context.Service<DocumentRepository, IDoc
                 ? Effect.succeed(rows[0])
                 : Effect.fail(new DatabaseError({ cause: new Error("Insert returned no document row") })),
             ),
+            Effect.mapError((cause) => new PersistenceError({ cause })),
+          ),
+
+      deleteById: (documentId) =>
+        effectDb
+          .run((typedDb) => typedDb.delete(documents).where(eq(documents.id, documentId)))
+          .pipe(
+            Effect.asVoid,
             Effect.mapError((cause) => new PersistenceError({ cause })),
           ),
     });

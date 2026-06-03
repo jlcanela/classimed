@@ -18,6 +18,9 @@ import {
 } from "./reader/-atoms";
 
 export const Route = createFileRoute("/_classimed/reader")({
+  validateSearch: (search: Record<string, unknown>): { doc?: string } => ({
+    doc: typeof search.doc === "string" ? search.doc : undefined,
+  }),
   component: RouteComponent,
 });
 
