@@ -1,16 +1,22 @@
 {
   "compilerOptions": {
-    "paths": {
-
-    },
-    "strict": true,
-    "moduleResolution": "nodenext",
     "target": "ESNext",
-    "module": "NodeNext",
+    "lib": ["ESNext", "DOM"],
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "moduleDetection": "force",
     "jsx": "react-jsx",
+    "allowJs": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "verbatimModuleSyntax": true,
     "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "strict": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
     "plugins": [
       {
         "name": "@effect/language-service",

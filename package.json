@@ -6,12 +6,18 @@
     "dev": "pnpm -C apps/classimed dev",
     "build": "pnpm -C apps/classimed build",
     "preview": "pnpm -C apps/classimed preview",
-    "typecheck": "pnpm -C apps/classimed typecheck"
+    "typecheck": "pnpm -C apps/classimed typecheck",
+    "bump:effect": "bun run tools/bump-effect.ts"
   },
   "dependencies": {
-    "@effect/platform-bun": "4.0.0-beta.70",
-    "@effect/platform-node": "4.0.0-beta.70",
-    "alchemy": "2.0.0-beta.43",
-    "effect": "4.0.0-beta.68"
+    "backend": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "tsx": "^4.22.4",
+    "alchemy": "catalog:",
+    "effect": "catalog:",
+    "@effect/platform-bun": "catalog:",
+    "@effect/platform-node": "catalog:"
   }
 }
