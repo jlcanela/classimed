@@ -93,7 +93,7 @@ const runSegmentation = Effect.fn(function* (input: { lines: OcrLine[] }) {
   const client = yield* HttpClient.HttpClient;
   const text = input.lines.map((line) => line.txt).join("\n");
 
-  const apiResponse = yield* HttpClientRequest.post(`${config.apiUrl}/chat/completions`).pipe(
+  const apiResponse = yield* HttpClientRequest.post(`${config.apiUrl}`).pipe(
     HttpClientRequest.bodyJsonUnsafe({
       model: config.model,
       temperature: 0.1,

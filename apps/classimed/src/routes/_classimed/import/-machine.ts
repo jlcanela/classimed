@@ -213,10 +213,17 @@ export const importMachine = createMachine(
             actions: assign({ segmentationLines: ({ event }) => event.output.lines }),
           },
           onError: {
-            target: "review",
+            target: "detect",
             actions: [
-              ({ event }) => { runtime.runFork(Effect.logError("[import] segmentation step failed", event.error)); },
-              assign({ submitError: ({ event }) => String(event.error) }),
+              ({ event }) => { runtime.runFork(Effect.logWarning("[import] segmentation failed, using fallback", event.error)); },
+              assign({
+                segmentationLines: ({ context }) => [{
+                  txt: context.ocrLines.map((line) => line.txt).join("\n"),
+                  lang: "classical" as const,
+                  conf: 0,
+                }],
+                submitError: () => null,
+              }),
             ],
           },
         },
