@@ -7,7 +7,6 @@ import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 import {
   BackendApi,
-  LlmResponse,
 } from "./Spec.ts";
 import type { ChatPayload } from "./Spec.ts";
 
@@ -36,13 +35,11 @@ const fetchLllmResponse = (payload: ChatPayload, env: Record<string, any>) =>
         catch: (cause) => cause,
       });
 
-      return new LlmResponse({
-        message: {
-          error: "upstream_error",
-          status: upstreamResp.status,
-          body: text,
-        },
-      });
+      return {
+        error: "upstream_error",
+        status: upstreamResp.status,
+        body: text,
+      } as const;
     }
 
     const message = yield* Effect.tryPromise({
@@ -50,7 +47,7 @@ const fetchLllmResponse = (payload: ChatPayload, env: Record<string, any>) =>
       catch: (cause) => cause,
     });
 
-    return new LlmResponse({ message });
+    return message;
   }).pipe(
     Effect.tapError((error) =>
       Effect.sync(() =>
@@ -60,11 +57,9 @@ const fetchLllmResponse = (payload: ChatPayload, env: Record<string, any>) =>
       ),
     ),
     Effect.orElseSucceed(() =>
-      new LlmResponse({
-        message: {
-          error: "upstream_fetch_failed",
-        },
-      }),
+      ({
+        error: "upstream_fetch_failed",
+      } as const),
     ),
   );
 
@@ -72,6 +67,7 @@ export default class Service extends Cloudflare.Worker<Service>()(
   "Service",
   {
     main: import.meta.filename,
+    url: false,
   },
   Effect.gen(function* () {
     const env = yield* Cloudflare.WorkerEnvironment;

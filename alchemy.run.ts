@@ -23,6 +23,10 @@ export default Alchemy.Stack(
     });
 
     const proxy = yield* Cloudflare.Worker("Proxy", {
+      name: "classimed-v1",
+      subdomain: {
+        enabled: true,
+      },
       main: "./apps/classimed/worker.ts",
       env: {
         BACKEND: backend,
@@ -31,7 +35,9 @@ export default Alchemy.Stack(
     });
 
     return {
-      websiteUrl: proxy.url.as<string>(),
+      proxyUrl: proxy.url.as<string>(),
+      websiteUrl: website.url.as<string>(),
+      backendUrl: backend.url.as<string | undefined>(),
     };
   }),
 );
