@@ -6,12 +6,6 @@ settings:
 
 catalogs:
   default:
-    '@effect/platform-bun':
-      specifier: 4.0.0-beta.78
-      version: 4.0.0-beta.78
-    '@effect/platform-node':
-      specifier: 4.0.0-beta.78
-      version: 4.0.0-beta.78
     alchemy:
       specifier: 2.0.0-beta.52
       version: 2.0.0-beta.52
@@ -27,12 +21,6 @@ importers:
         specifier: workspace:*
         version: link:apps/backend
     devDependencies:
-      '@effect/platform-bun':
-        specifier: 'catalog:'
-        version: 4.0.0-beta.78(effect@4.0.0-beta.78)
-      '@effect/platform-node':
-        specifier: 'catalog:'
-        version: 4.0.0-beta.78(effect@4.0.0-beta.78)(ioredis@5.10.1)
       '@types/node':
         specifier: ^25.9.1
         version: 25.9.1
@@ -48,15 +36,12 @@ importers:
       tsx:
         specifier: ^4.22.4
         version: 4.22.4
+      yaml:
+        specifier: ^2.9.0
+        version: 2.9.0
 
   apps/backend:
     dependencies:
-      '@effect/platform-bun':
-        specifier: 'catalog:'
-        version: 4.0.0-beta.78(effect@4.0.0-beta.78)
-      '@effect/platform-node':
-        specifier: 'catalog:'
-        version: 4.0.0-beta.78(effect@4.0.0-beta.78)(ioredis@5.10.1)
       alchemy:
         specifier: 'catalog:'
         version: 2.0.0-beta.52(@effect/platform-bun@4.0.0-beta.78(effect@4.0.0-beta.78))(@effect/platform-node@4.0.0-beta.78(effect@4.0.0-beta.78)(ioredis@5.10.1))(@types/node@25.9.1)(drizzle-kit@1.0.0-rc.3)(drizzle-orm@1.0.0-rc.3(@electric-sql/pglite@0.2.17)(@libsql/client@0.17.3)(effect@4.0.0-beta.78)(mysql2@3.22.3(@types/node@25.9.1))(pg@8.21.0)(zod@3.25.76))(effect@4.0.0-beta.78)(vite@8.0.13(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))(vitest@4.1.7(@types/node@25.9.1)(vite@8.0.13(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0)))(workerd@1.20260526.1)(ws@8.21.0)
@@ -3036,6 +3021,7 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+    optional: true
 
   '@effect/platform-node-shared@4.0.0-beta.78(effect@4.0.0-beta.78)':
     dependencies:
@@ -3045,6 +3031,7 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+    optional: true
 
   '@effect/platform-node@4.0.0-beta.78(effect@4.0.0-beta.78)(ioredis@5.10.1)':
     dependencies:
@@ -3056,6 +3043,7 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+    optional: true
 
   '@effect/vitest@4.0.0-beta.78(effect@4.0.0-beta.78)(vitest@4.1.7(@types/node@25.9.1)(vite@8.0.13(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0)))':
     dependencies:
@@ -3285,7 +3273,8 @@ snapshots:
 
   '@floating-ui/utils@0.2.11': {}
 
-  '@ioredis/commands@1.5.1': {}
+  '@ioredis/commands@1.5.1':
+    optional: true
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
@@ -3928,7 +3917,8 @@ snapshots:
 
   clsx@2.1.1: {}
 
-  cluster-key-slot@1.1.2: {}
+  cluster-key-slot@1.1.2:
+    optional: true
 
   code-excerpt@4.0.0:
     dependencies:
@@ -4230,6 +4220,7 @@ snapshots:
       standard-as-callback: 2.1.0
     transitivePeerDependencies:
       - supports-color
+    optional: true
 
   is-binary-path@2.1.0:
     dependencies:
@@ -4352,9 +4343,11 @@ snapshots:
       lightningcss-win32-arm64-msvc: 1.32.0
       lightningcss-win32-x64-msvc: 1.32.0
 
-  lodash.defaults@4.2.0: {}
+  lodash.defaults@4.2.0:
+    optional: true
 
-  lodash.isarguments@3.1.0: {}
+  lodash.isarguments@3.1.0:
+    optional: true
 
   long@5.3.2: {}
 
@@ -4375,7 +4368,8 @@ snapshots:
       braces: 3.0.3
       picomatch: 2.3.2
 
-  mime@4.1.0: {}
+  mime@4.1.0:
+    optional: true
 
   mimic-fn@2.1.0: {}
 
@@ -4571,11 +4565,13 @@ snapshots:
 
   readdirp@4.1.2: {}
 
-  redis-errors@1.2.0: {}
+  redis-errors@1.2.0:
+    optional: true
 
   redis-parser@3.0.0:
     dependencies:
       redis-errors: 1.2.0
+    optional: true
 
   resolve-pkg-maps@1.0.0: {}
 
@@ -4650,7 +4646,8 @@ snapshots:
 
   stackback@0.0.2: {}
 
-  standard-as-callback@2.1.0: {}
+  standard-as-callback@2.1.0:
+    optional: true
 
   std-env@4.1.0: {}
 
@@ -4716,7 +4713,8 @@ snapshots:
 
   undici@7.25.0: {}
 
-  undici@8.3.0: {}
+  undici@8.3.0:
+    optional: true
 
   unenv@2.0.0-rc.24:
     dependencies:

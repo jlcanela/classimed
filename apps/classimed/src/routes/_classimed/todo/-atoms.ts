@@ -4,7 +4,7 @@ import { atomRuntime } from "@/app/boot";
 import type { Task } from "@/db/schema";
 import { listTasks, createTask, setTaskCompleted, deleteTask } from "@/usecase/tasks";
 
-export const tasksAsyncAtom = atomRuntime.atom(listTasks)
+const tasksAsyncAtom = atomRuntime.atom(listTasks)
   .pipe(Atom.withReactivity(["tasks"]));
 
 export const tasksAtom = Atom.readable((get): ReadonlyArray<Task> => {

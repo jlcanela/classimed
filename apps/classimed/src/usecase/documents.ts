@@ -1,11 +1,11 @@
 import { Effect } from "effect";
-import type { Document, InsertDocument } from "../db/schema";
+import type { Document } from "../db/schema";
 import type { PersistenceError } from "../domain/errors";
 import { DocumentRepository } from "../repo/document-repo";
 import { SegmentRepository } from "../repo/segment-repo";
 import { listSegmentsByDocument } from "./segments";
 
-type NewDocument = InsertDocument & { id: string; title: string };
+// type NewDocument = InsertDocument & { id: string; title: string };
 
 export type LibraryDocument = Document & {
   segments: number;
@@ -56,10 +56,10 @@ export const listDocuments: Effect.Effect<ReadonlyArray<LibraryDocument>, Persis
     );
   });
 
-export const createDocument = (
-  document: NewDocument,
-): Effect.Effect<Document, PersistenceError, DocumentRepository> =>
-  DocumentRepository.pipe(Effect.flatMap((repo) => repo.create(document)));
+// const createDocument = (
+//   document: NewDocument,
+// ): Effect.Effect<Document, PersistenceError, DocumentRepository> =>
+//   DocumentRepository.pipe(Effect.flatMap((repo) => repo.create(document)));
 
 export const deleteDocument = (
   documentId: string,

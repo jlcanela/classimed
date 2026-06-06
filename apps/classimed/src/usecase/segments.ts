@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import type { InsertSegment, Segment } from "../db/schema";
+import type { Segment } from "../db/schema";
 import type { PersistenceError } from "../domain/errors";
 import { SegmentRepository } from "../repo/segment-repo";
 
@@ -8,10 +8,10 @@ export const listSegmentsByDocument = (
 ): Effect.Effect<ReadonlyArray<Segment>, PersistenceError, SegmentRepository> =>
   SegmentRepository.pipe(Effect.flatMap((repo) => repo.listByDocumentId(documentId)));
 
-export const createSegmentsBatch = (
-  items: ReadonlyArray<InsertSegment>,
-): Effect.Effect<ReadonlyArray<Segment>, PersistenceError, SegmentRepository> =>
-  SegmentRepository.pipe(Effect.flatMap((repo) => repo.createBatch(items)));
+// const createSegmentsBatch = (
+//   items: ReadonlyArray<InsertSegment>,
+// ): Effect.Effect<ReadonlyArray<Segment>, PersistenceError, SegmentRepository> =>
+//   SegmentRepository.pipe(Effect.flatMap((repo) => repo.createBatch(items)));
 
 export const updateSegmentTexts = (input: {
   segmentId: string;

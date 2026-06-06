@@ -22,7 +22,7 @@ export const updateGlossaryTerm = (
 ): Effect.Effect<GlossaryTerm, PersistenceError, GlossaryTermRepository> =>
   GlossaryTermRepository.pipe(Effect.flatMap((repo) => repo.update(id, patch)));
 
-export const deleteGlossaryTerm = (
-  id: string,
-): Effect.Effect<void, PersistenceError, GlossaryTermRepository> =>
-  GlossaryTermRepository.pipe(Effect.flatMap((repo) => repo.delete(id)));
+// const deleteGlossaryTerm = (
+//   id: string,
+// ): Effect.Effect<void, PersistenceError, GlossaryTermRepository> =>
+//   GlossaryTermRepository.pipe(Effect.flatMap((repo) => repo.delete(id)));

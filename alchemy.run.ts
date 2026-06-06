@@ -27,7 +27,7 @@ export default Alchemy.Stack(
       subdomain: {
         enabled: true,
       },
-      main: "./apps/classimed/worker.ts",
+      main: "./cloudflare_proxy.ts",
       env: {
         BACKEND: backend,
         WEBSITE: website,

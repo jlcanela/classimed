@@ -2,8 +2,6 @@ packages:
   - apps/*
 catalog:
   effect: 4.0.0-beta.78
-  "@effect/platform-bun": 4.0.0-beta.78
-  "@effect/platform-node": 4.0.0-beta.78
   alchemy: 2.0.0-beta.52
 allowBuilds:
   esbuild: true

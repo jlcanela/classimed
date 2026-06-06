@@ -44,7 +44,7 @@ const toGlossaryEntry = (term: GlossaryTerm): GlossaryEntry => ({
 	note: term.note ?? '',
 });
 
-export const glossaryAsyncAtom = atomRuntime.atom(
+const glossaryAsyncAtom = atomRuntime.atom(
 	listGlossaryTerms.pipe(Effect.map((terms) => terms.map(toGlossaryEntry))),
 ).pipe(Atom.withReactivity(['glossary-terms']));
 
@@ -97,9 +97,9 @@ export const queryAtom = Atom.make('');
 export const categoryAtom = Atom.make('all');
 export const editingAtom = Atom.make<EditableGlossaryTerm | null>(null);
 
-export const categoryColorMapAtom = Atom.readable((get) =>
-	Object.fromEntries(get(categoriesAtom).map((category) => [category.id, category.color])),
-);
+// const categoryColorMapAtom = Atom.readable((get) =>
+// 	Object.fromEntries(get(categoriesAtom).map((category) => [category.id, category.color])),
+// );
 
 export const categoryBadgeClassMapAtom = Atom.readable((get) =>
 	Object.fromEntries(get(categoriesAtom).map((category) => [category.id, `badge-${category.color}`])),

@@ -1,4 +1,5 @@
 import type { SegmentationLine } from "./-atoms";
+import { StepLoading } from "./-StepLoading";
 
 type DetectStepProps = {
   lines: SegmentationLine[];
@@ -13,14 +14,7 @@ export function DetectStep(props: DetectStepProps) {
   const { lines, isLoading, isSubmitting, error, onBack, onSubmit } = props;
 
   if (isLoading) {
-    return (
-      <div className="paper" style={{ maxWidth: 700, margin: "0 auto", padding: 20 }}>
-        <div className="ws-margin-h">Segmentation et detection</div>
-        <p className="muted" style={{ marginTop: 8 }}>
-          Detection des segments en cours...
-        </p>
-      </div>
-    );
+    return <StepLoading title="Segmentation et detection" message="Detection des segments en cours..." />;
   }
 
   return (

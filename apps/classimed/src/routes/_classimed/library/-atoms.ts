@@ -4,7 +4,7 @@ import { atomRuntime } from "@/app/boot";
 import type { LibraryDocument } from "@/usecase/documents";
 import { deleteDocument, listDocuments } from "@/usecase/documents";
 
-export const libraryAsyncAtom = atomRuntime.atom(listDocuments)
+const libraryAsyncAtom = atomRuntime.atom(listDocuments)
   .pipe(Atom.withReactivity(["documents"]));
 
 export const libraryDocumentsAtom = Atom.readable((get): ReadonlyArray<LibraryDocument> => {

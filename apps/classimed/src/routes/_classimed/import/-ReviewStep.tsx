@@ -1,4 +1,5 @@
 import type { OcrLine } from "./-atoms";
+import { StepLoading } from "./-StepLoading";
 
 type ReviewStepProps = {
   sourceLabel: string;
@@ -14,14 +15,7 @@ export function ReviewStep(props: ReviewStepProps) {
   const { sourceLabel, sourcePreview, confidence, lines, isLoading, onBack, onConfirm } = props;
 
   if (isLoading) {
-    return (
-      <div className="paper" style={{ maxWidth: 700, margin: "0 auto", padding: 20 }}>
-        <div className="ws-margin-h">Relecture OCR</div>
-        <p className="muted" style={{ marginTop: 8 }}>
-          OCR en cours...
-        </p>
-      </div>
-    );
+    return <StepLoading title="Relecture OCR" message="OCR en cours..." />;
   }
 
   return (

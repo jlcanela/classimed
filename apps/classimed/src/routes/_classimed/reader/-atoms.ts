@@ -37,7 +37,7 @@ const toReaderSegment = (segment: Segment): ReaderSegment => ({
   flagReason: segment.flagReason,
 });
 
-export const readerWorkspaceAsyncAtom = atomRuntime.atom(
+const readerWorkspaceAsyncAtom = atomRuntime.atom(
   Effect.gen(function* () {
     const documents = yield* listDocuments;
 
@@ -69,7 +69,7 @@ export const readerLoadErrorAtom = Atom.readable((get): string | null => {
 
 export const readerSelectedDocumentIdAtom = Atom.searchParam("doc");
 
-export const readerActiveDocumentIdAtom = Atom.readable((get): string | null => {
+const readerActiveDocumentIdAtom = Atom.readable((get): string | null => {
   const selectedId = get(readerSelectedDocumentIdAtom);
   const documents = get(readerWorkspaceAtom).documents;
   if (documents.length === 0) {

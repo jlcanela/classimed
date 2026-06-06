@@ -32,7 +32,7 @@ const repositoryLayer = Layer.unwrap(
   }),
 ).pipe(Layer.provide(DatabaseLive), Layer.provide(Migration.layer), Layer.provide(Seed.layer));
 
-export const appLayer = Layer.mergeAll(DatabaseLive, repositoryLayer);
+const appLayer = Layer.mergeAll(DatabaseLive, repositoryLayer);
 
 export const atomRuntime = Atom.runtime(appLayer);
 

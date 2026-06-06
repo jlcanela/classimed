@@ -11,10 +11,8 @@
     "directory": "examples/monorepo-single-stack/backend"
   },
   "dependencies": {
-   "@effect/platform-bun": "catalog:",
-    "@effect/platform-node": "catalog:",
-    "alchemy": "catalog:",
-    "effect": "catalog:"
+    "effect": "catalog:",
+    "alchemy": "catalog:"
   },
   "exports": {
     ".": {
