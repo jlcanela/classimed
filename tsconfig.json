@@ -5,7 +5,7 @@
     "composite": true,
     "noEmit": false,
     "outDir": "./lib",
-    "rootDir": "."
+    "rootDir": ".",
   },
   "references": [
     { "path": "./apps/backend" },
