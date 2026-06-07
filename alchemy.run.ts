@@ -12,6 +12,12 @@ export default Alchemy.Stack(
   },
   Effect.gen(function* () {
     const backend = yield* Service;
+
+    const vpcService = yield* Cloudflare.VpcServiceRef({ name: "dgx-spark-llm" }).pipe(Effect.orDie);
+    yield* backend.bind("VPC_SERVICE", {
+      bindings: [{ type: "vpc_service", name: "VPC_SERVICE", serviceId: vpcService.serviceId }],
+    });
+
     const path = yield* Path;
 
     const website = yield* Cloudflare.Vite("Website", {
